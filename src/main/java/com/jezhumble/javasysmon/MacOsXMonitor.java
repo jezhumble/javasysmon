@@ -14,13 +14,17 @@ public class MacOsXMonitor implements Monitor {
     public MacOsXMonitor() {
         if (monitor != null) {
             JavaSysMon.setMonitor(monitor);
+            JavaSysMon.addSupportedConfig("Mac Os X (PPC, x86, X86_64)");
         }
     }
 
+    public String osName() {
+        return System.getProperty("os.name") + " " + System.getProperty("os.version");
+    }
+
     public native float cpuUsage();
-
     public native long totalMemory();
-
     public native long freeMemory();
-
+    public native long totalSwap();
+    public native long freeSwap();
 }

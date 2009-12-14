@@ -7,30 +7,46 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	/*
-	 * Class:     com_jezhumble_javasysmon_MacOsXMonitor
-	 * Method:    cpuUsage
-	 * Signature: ()F
-	 */
-	JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuUsage
-	(JNIEnv *, jobject);
-	
-	/*
-	 * Class:     com_jezhumble_javasysmon_MacOsXMonitor
-	 * Method:    totalMemory
-	 * Signature: ()I
-	 */
-	JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalMemory
-	(JNIEnv *, jobject);
-	
-	/*
-	 * Class:     com_jezhumble_javasysmon_MacOsXMonitor
-	 * Method:    freeMemory
-	 * Signature: ()I
-	 */
-	JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeMemory
-	(JNIEnv *, jobject);
-	
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    cpuUsage
+ * Signature: ()F
+ */
+JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuUsage
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    totalMemory
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalMemory
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    freeMemory
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeMemory
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    totalSwap
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalSwap
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    freeSwap
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeSwap
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif
