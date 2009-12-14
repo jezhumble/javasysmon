@@ -1,6 +1,6 @@
 <project name="javasysmon" basedir="." default="package">
 
-  <import file="lib/one-jar-ant-task.xml"/>   
+  <import file="lib/java/one-jar-ant-task.xml"/>   
  
   <target name="init">
     <mkdir dir="target/classes"/>
@@ -20,7 +20,7 @@
         <fileset dir="target/classes"/>
       </main>
       <binlib>
-        <fileset file="macosx/build/Release/libjavasysmon.jnilib" />
+        <fileset dir="lib/native" />
       </binlib>
     </one-jar> 
   </target>

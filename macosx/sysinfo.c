@@ -68,8 +68,10 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalMemory 
 RETURN:
 	return retval;
  */
+	return 0;
 }
 
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeMemory (JNIEnv *env, jobject obj)
 {
+	return 0;
 }
