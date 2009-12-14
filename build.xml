@@ -1,0 +1,27 @@
+<project name="javasysmon" basedir="." default="package">
+
+  <import file="lib/one-jar-ant-task.xml"/>   
+ 
+  <target name="init">
+    <mkdir dir="target/classes"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="target" includeemptydirs="true"/>
+  </target>
+
+  <target name="package" depends="init">
+    <javac destdir="target/classes" target="1.4" source="1.4">
+      <src path="src/main/java" />
+    </javac>
+
+    <one-jar destfile="target/javasysmon.jar" manifest="src/main/resources/MANIFEST.MF">
+      <main>
+        <fileset dir="target/classes"/>
+      </main>
+      <binlib>
+        <fileset file="macosx/build/Release/libjavasysmon.jnilib" />
+      </binlib>
+    </one-jar> 
+  </target>
+</project>
