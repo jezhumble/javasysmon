@@ -1,20 +1,40 @@
 <project name="javasysmon" basedir="." default="package">
 
   <import file="lib/java/one-jar-ant-task.xml"/>   
+
+  <path id="test.classpath">
+    <pathelement path="target/classes"/>
+    <pathelement path="target/test-classes"/>
+    <pathelement path="lib/java/junit-3.8.2.jar"/>
+  </path>
  
   <target name="init">
     <mkdir dir="target/classes"/>
+    <mkdir dir="target/test-classes"/>
+    <mkdir dir="target/reports"/>
   </target>
 
   <target name="clean">
     <delete dir="target" includeemptydirs="true"/>
   </target>
 
-  <target name="package" depends="init">
+  <target name="compile" depends="init">
     <javac destdir="target/classes" target="1.4" source="1.4">
       <src path="src/main/java" />
     </javac>
+  </target>
 
+  <target name="compile-tests" depends="compile, init">
+    <javac destdir="target/test-classes" target="1.4" source="1.4">
+      <classpath refid="test.classpath"/>
+      <src path="src/test/java" />
+    </javac>
+    <copy todir="target/test-classes">
+      <fileset dir="src/test/resources"/>
+    </copy>
+  </target>
+
+  <target name="package" depends="init, compile">
     <one-jar destfile="target/javasysmon.jar" manifest="src/main/resources/MANIFEST.MF">
       <main>
         <fileset dir="target/classes"/>
@@ -23,5 +43,15 @@
         <fileset dir="lib/native" />
       </binlib>
     </one-jar> 
+  </target>
+
+  <target name="test" depends="compile, compile-tests">
+    <junit failureproperty="test.failure">
+      <classpath refid="test.classpath"/>
+      <batchtest todir="target/reports">
+        <fileset dir="target/test-classes" includes="**/*Test.class" />
+	<formatter type="plain"/>
+      </batchtest>
+    </junit>
   </target>
 </project>

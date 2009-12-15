@@ -1,7 +1,6 @@
 package com.jezhumble.javasysmon;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 
 public class JavaSysMon implements Monitor {
@@ -18,7 +17,8 @@ public class JavaSysMon implements Monitor {
     }
 
     static {
-        new MacOsXMonitor();        
+        new MacOsXMonitor();
+        new LinuxMonitor();
     }
 
     public static void main (String[] params) throws Exception {

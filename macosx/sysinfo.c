@@ -17,6 +17,7 @@
 static int pageSize = 0;
 static unsigned long long p_userticks, p_systicks, p_idleticks;
 static float p_cpuusage;
+static mach_port_t sysmonport;
 
 int sample_cpu_ticks(host_info_t host_info)
 {
@@ -24,7 +25,7 @@ int sample_cpu_ticks(host_info_t host_info)
 	mach_msg_type_number_t		count;
 	
 	count = HOST_CPU_LOAD_INFO_COUNT;
-	error = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, host_info, &count);
+	error = host_statistics(sysmonport, HOST_CPU_LOAD_INFO, host_info, &count);
 	if (error != KERN_SUCCESS) {
 		printf("Error trying to get CPU usage: %s\n", mach_error_string(error));
 		return 1;
@@ -38,6 +39,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 	int				mib[2];
 	size_t			len;
 	unsigned long long p_totalticks;
+	sysmonport = mach_host_self();
 	
 	mib[0] = CTL_HW;
 	mib[1] = HW_PAGESIZE;
@@ -123,7 +125,7 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeMemory (
 	 
 	 count = sizeof(r_vm_info) / sizeof(natural_t);
 
-	 error = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t) &r_vm_info, &count);
+	 error = host_statistics(sysmonport, HOST_VM_INFO, (host_info_t) &r_vm_info, &count);
 
 	if (error != KERN_SUCCESS) {
 		 printf("Error trying to get free memory: %s\n", mach_error_string(error));
