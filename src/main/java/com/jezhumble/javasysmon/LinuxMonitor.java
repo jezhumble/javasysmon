@@ -9,27 +9,20 @@ public class LinuxMonitor implements Monitor {
 
     private static final Pattern TOTAL_MEMORY_PATTERN =
             Pattern.compile("MemTotal:\\s+(\\d+) kB", Pattern.MULTILINE);
-
     private static final Pattern FREE_MEMORY_PATTERN =
             Pattern.compile("MemFree:\\s+(\\d+) kB", Pattern.MULTILINE);
-
     private static final Pattern TOTAL_SWAP_PATTERN =
             Pattern.compile("SwapTotal:\\s+(\\d+) kB", Pattern.MULTILINE);
-
     private static final Pattern FREE_SWAP_PATTERN =
             Pattern.compile("SwapFree:\\s+(\\d+) kB", Pattern.MULTILINE);
-
     private static final Pattern CPU_JIFFIES_PATTERN =
             Pattern.compile("cpu\\s+(.*)", Pattern.MULTILINE);
-
     private static final Pattern NUM_CPU_PATTERN =
             Pattern.compile("processor\\s+:\\s+(\\d+)", Pattern.MULTILINE);
-
     private static final Pattern CPU_FREQ_PATTERN =
             Pattern.compile("model name[^@]*@\\s+([0-9.A-Za-z]*)", Pattern.MULTILINE);
 
     private FileUtils fileUtils;
-
     private String previousJiffies;
     private float previousCpuUsage = 0;
 

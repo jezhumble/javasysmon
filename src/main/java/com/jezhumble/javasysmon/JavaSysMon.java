@@ -19,6 +19,7 @@ public class JavaSysMon implements Monitor {
     static {
         new MacOsXMonitor();
         new LinuxMonitor();
+        new WindowsMonitor();
     }
 
     public static void main (String[] params) throws Exception {
