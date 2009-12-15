@@ -1,5 +1,8 @@
 package com.jezhumble.javasysmon;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LinuxMonitor implements Monitor {
@@ -18,6 +21,12 @@ public class LinuxMonitor implements Monitor {
 
     private static final Pattern CPU_JIFFIES_PATTERN =
             Pattern.compile("cpu\\s+(.*)", Pattern.MULTILINE);
+
+    private static final Pattern NUM_CPU_PATTERN =
+            Pattern.compile("processor\\s+:\\s+(\\d+)", Pattern.MULTILINE);
+
+    private static final Pattern CPU_FREQ_PATTERN =
+            Pattern.compile("model name[^@]*@\\s+([0-9.A-Za-z]*)", Pattern.MULTILINE);
 
     private FileUtils fileUtils;
 
@@ -78,6 +87,41 @@ public class LinuxMonitor implements Monitor {
     public long freeSwap() {
         String freeMemory = fileUtils.runRegexOnFile(FREE_SWAP_PATTERN, "/proc/meminfo");
         return Long.parseLong(freeMemory) * 1024;
+    }
+
+    public int numCpus() {
+        int numCpus = 0;
+        try {
+            String cpuInfo = fileUtils.slurp("/proc/cpuinfo");
+            Matcher matcher = NUM_CPU_PATTERN.matcher(cpuInfo);
+            while (matcher.find()) {
+                numCpus++;
+            }
+            return numCpus;
+        } catch (IOException ioe) {
+            // return nothing
+        }
+        return 0;
+    }
+
+    public long cpuFrequency() {
+        String cpuFrequencyAsString = fileUtils.runRegexOnFile(CPU_FREQ_PATTERN, "/proc/cpuinfo");
+        int strLen = cpuFrequencyAsString.length();
+        BigDecimal cpuFrequency = new BigDecimal(cpuFrequencyAsString.substring(0, strLen - 3));
+        long multiplier = getMultiplier(cpuFrequencyAsString.charAt(strLen - 3));
+        return cpuFrequency.multiply(new BigDecimal(Long.toString(multiplier))).longValue();
+    }
+
+    private long getMultiplier(char multiplier) {
+        switch (multiplier) {
+            case 'G':
+                return 1000000000;
+            case 'M':
+                return 1000000;
+            case 'k':
+                return 1000;
+        }
+        return 0;
     }
 
     private long getTotalJiffies(String[] jiffyString) {

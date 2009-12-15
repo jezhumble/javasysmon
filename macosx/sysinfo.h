@@ -47,6 +47,22 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalSwap
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeSwap
   (JNIEnv *, jobject);
 
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    numCpus
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_numCpus
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    cpuFrequency
+ * Signature: ()I
+ */
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

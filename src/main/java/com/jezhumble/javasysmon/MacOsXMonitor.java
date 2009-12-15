@@ -27,4 +27,6 @@ public class MacOsXMonitor implements Monitor {
     public native long freeMemory();
     public native long totalSwap();
     public native long freeSwap();
+    public native int numCpus();
+    public native long cpuFrequency();
 }

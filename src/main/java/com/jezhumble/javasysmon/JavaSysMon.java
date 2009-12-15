@@ -31,6 +31,8 @@ public class JavaSysMon implements Monitor {
             }
         } else {
             System.out.println("OS name: " + monitor.osName());
+            System.out.println("Number of CPUs: " + monitor.numCpus());
+            System.out.println("CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
             System.out.println("Total memory: " + monitor.totalMemory() / (1024*1024) + " Mb");
             System.out.println("Free memory: " + monitor.freeMemory() / (1024*1024) + " Mb");
             System.out.println("Total swap: " + monitor.totalSwap() / (1024*1024) + " Mb");
@@ -63,5 +65,13 @@ public class JavaSysMon implements Monitor {
 
     public long freeSwap() {
         return monitor.freeSwap();
+    }
+
+    public int numCpus() {
+        return monitor.numCpus();
+    }
+
+    public long cpuFrequency() {
+        return monitor.cpuFrequency();
     }
 }

@@ -11,6 +11,9 @@ public class StubFileUtils extends FileUtils {
         if (fileName.equals("/proc/meminfo")) {
             testFile = getTestFile("test_meminfo");
         }
+        if (fileName.equals("/proc/cpuinfo")) {
+            testFile = getTestFile("test_cpuinfo");
+        }
         if (fileName.equals("/proc/stat")) {
             testFile = alreadyGotStat ? getTestFile("test_stat_1") : getTestFile("test_stat_0");
             alreadyGotStat = true;

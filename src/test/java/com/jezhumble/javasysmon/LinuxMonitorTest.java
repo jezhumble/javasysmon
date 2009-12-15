@@ -42,4 +42,15 @@ public class LinuxMonitorTest extends TestCase {
         Assert.assertTrue(Math.abs(newActualCpuUsage - actualCpuUsage) < 0.000000001f);
     }
 
+    public void testShouldCalculateNumCpus() {
+        LinuxMonitor monitor = new LinuxMonitor(new StubFileUtils());
+        final int numCpus = monitor.numCpus();
+        Assert.assertEquals(2, numCpus);
+    }
+
+    public void testShouldCalculateCpuFrequency() {
+        LinuxMonitor monitor = new LinuxMonitor(new StubFileUtils());
+        final long cpuFrequency = monitor.cpuFrequency();
+        Assert.assertEquals(2400000000l, cpuFrequency);
+    }
 }

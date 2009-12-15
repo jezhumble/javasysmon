@@ -7,4 +7,6 @@ public interface Monitor {
     public long freeMemory();
     public long totalSwap();
     public long freeSwap();
+    public int numCpus();
+    public long cpuFrequency();
 }

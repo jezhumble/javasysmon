@@ -174,3 +174,39 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeSwap (JN
 	
 	return (jlong) xsu.xsu_avail;	
 }
+
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_numCpus (JNIEnv *env, jobject object)
+{
+	int					mib[2];
+	size_t				len;
+	int					ncpu;
+	
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	len = sizeof(ncpu);
+	
+	if (sysctl(mib, 2, &ncpu, &len, NULL, 0) != 0) {
+		perror("sysctl");
+		return (jint) 0;
+	}
+	
+	return (jint) ncpu;	
+}
+
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency (JNIEnv *env, jobject object)
+{
+	int					mib[2];
+	size_t				len;
+	unsigned int		cpu_freq;
+	
+	mib[0] = CTL_HW;
+	mib[1] = HW_CPU_FREQ;
+	len = sizeof(cpu_freq);
+	
+	if (sysctl(mib, 2, &cpu_freq, &len, NULL, 0) != 0) {
+		perror("sysctl");
+		return (jlong) 0;
+	}
+	
+	return (jlong) cpu_freq;	
+}
