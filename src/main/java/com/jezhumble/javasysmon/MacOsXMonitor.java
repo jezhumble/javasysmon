@@ -12,9 +12,9 @@ public class MacOsXMonitor implements Monitor {
     }
 
     public MacOsXMonitor() {
+        JavaSysMon.addSupportedConfig("Mac Os X (PPC, x86, X86_64)");
         if (monitor != null) {
             JavaSysMon.setMonitor(monitor);
-            JavaSysMon.addSupportedConfig("Mac Os X (PPC, x86, X86_64)");
         }
     }
 

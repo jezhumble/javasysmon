@@ -15,9 +15,9 @@ public class WindowsMonitor implements Monitor {
     }
 
     public WindowsMonitor() {
+        JavaSysMon.addSupportedConfig("Windows (x86)");
         if (monitor != null) {
             JavaSysMon.setMonitor(monitor);
-            JavaSysMon.addSupportedConfig("Windows (x86)");
         }
     }
 

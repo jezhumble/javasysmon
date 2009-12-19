@@ -33,6 +33,7 @@ public class LinuxMonitor implements Monitor {
 
     public LinuxMonitor() {
         fileUtils = new FileUtils();
+        JavaSysMon.addSupportedConfig("Linux (only tested with x86)");
         if (System.getProperty("os.name").toLowerCase().startsWith("linux")) {
             JavaSysMon.setMonitor(this);
             JavaSysMon.addSupportedConfig("Linux (only tested with x86)");
