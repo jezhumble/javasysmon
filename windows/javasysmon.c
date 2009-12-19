@@ -40,15 +40,14 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
   p_kernel = filetime_to_int64(&kerneltime);
   p_user = filetime_to_int64(&usertime);
   p_cpu_usage = 0;
-  printf("p_idle: %lu p_kernel: %lu p_user: %lu\n", p_idle, p_kernel, p_user);
-
+  //printf("idle: %llu kernel: %llu user: %llu\n", p_idle / 10000, p_kernel / 10000, p_user / 10000);
 
   return JNI_VERSION_1_2;
 }
 
 JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuUsage (JNIEnv *env, jobject object)
 {
-  ULONGLONG idle, kernel, user, total, p_total;
+  ULONGLONG idle, kernel, user, idle_diff, kernel_diff, user_diff, total_diff;
   float cpu_usage;
   FILETIME idletime, kerneltime, usertime;
 
@@ -56,14 +55,23 @@ JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuUsage (
   idle = filetime_to_int64(&idletime);
   kernel = filetime_to_int64(&kerneltime);
   user = filetime_to_int64(&usertime);
-  total = idle + kernel + user;
-  printf("idle: %lu kernel: %lu user: %lu total: %lu\n", idle, kernel, user, total);
-  p_total = p_idle + p_kernel + p_user;
-  if (total == p_total || idle == p_idle) {
+  //printf("idle: %llu kernel: %llu user: %llu\n", idle / 10000, kernel / 10000, user / 10000);
+
+  idle_diff = idle - p_idle;
+  kernel_diff = kernel - p_kernel;
+  user_diff = user - p_user;
+
+  // you'd think that total CPU is idle + kernel + user. But the idle process
+  // is part of the kernel time (this is undocumented, but the calculation comes
+  // out wrong otherwise.
+
+  total_diff = kernel_diff + user_diff;
+
+  if (idle_diff == 0 || total_diff == 0) {
     cpu_usage = p_cpu_usage;
   } else {
-	printf("idle: %lu p_idle: %lu total: %lu p_total: %lu\n", idle, p_idle, total, p_total);
-    cpu_usage = ((float)1) - ((float)(idle - p_idle)) / ((float)(total - p_total));
+	  //printf("Idle diff: %llu Kernel diff: %llu User diff: %llu Total diff: %llu\n", idle_diff, kernel_diff, user_diff, total_diff);
+    cpu_usage = ((float)(total_diff - idle_diff)) / ((float)total_diff);
     // Reset counters
     p_idle = idle;
     p_user = user;
