@@ -210,3 +210,31 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency
 	
 	return (jlong) cpu_freq;	
 }
+
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_uptimeInSeconds  (JNIEnv *env, jobject object)
+{
+	int					mib[2];
+	size_t				len;
+	struct timeval		secs;
+	unsigned long long	uptime;
+	
+	if (gettimeofday(&secs, NULL) != 0) {
+		perror("gettimeofday");
+		return (jlong) 0;
+	}
+	
+	uptime = (unsigned long long) secs.tv_sec;
+	
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BOOTTIME;
+	len = sizeof(secs);
+	
+	if (sysctl(mib, 2, &secs, &len, NULL, 0) != 0) {
+		perror("sysctl");
+		return (jlong) 0;
+	}
+	
+	uptime -= (unsigned long long) secs.tv_sec; 
+	
+	return (jlong) uptime;
+}

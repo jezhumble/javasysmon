@@ -21,6 +21,8 @@ public class LinuxMonitor implements Monitor {
             Pattern.compile("processor\\s+:\\s+(\\d+)", Pattern.MULTILINE);
     private static final Pattern CPU_FREQ_PATTERN =
             Pattern.compile("model name[^@]*@\\s+([0-9.A-Za-z]*)", Pattern.MULTILINE);
+    private static final Pattern UPTIME_PATTERN =
+            Pattern.compile("([\\d]*).*");
 
     private FileUtils fileUtils;
     private String previousJiffies;
@@ -104,6 +106,11 @@ public class LinuxMonitor implements Monitor {
         BigDecimal cpuFrequency = new BigDecimal(cpuFrequencyAsString.substring(0, strLen - 3));
         long multiplier = getMultiplier(cpuFrequencyAsString.charAt(strLen - 3));
         return cpuFrequency.multiply(new BigDecimal(Long.toString(multiplier))).longValue();
+    }
+
+    public long uptimeInSeconds() {
+        String uptime = fileUtils.runRegexOnFile(UPTIME_PATTERN, "/proc/uptime");
+        return Long.parseLong(uptime);
     }
 
     private long getMultiplier(char multiplier) {

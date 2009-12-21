@@ -8,6 +8,9 @@ public class StubFileUtils extends FileUtils {
 
     public String slurp(String fileName) throws IOException {
         InputStream testFile = null;
+        if (fileName.equals("/proc/uptime")) {
+            testFile = getTestFile("test_uptime");
+        }
         if (fileName.equals("/proc/meminfo")) {
             testFile = getTestFile("test_meminfo");
         }

@@ -32,6 +32,7 @@ public class JavaSysMon implements Monitor {
             }
         } else {
             System.out.println("OS name: " + monitor.osName());
+            System.out.println("Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()));
             System.out.println("Number of CPUs: " + monitor.numCpus());
             System.out.println("CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
             System.out.println("Total memory: " + monitor.totalMemory() / (1024*1024) + " Mb");
@@ -42,6 +43,12 @@ public class JavaSysMon implements Monitor {
             Thread.sleep(500);
             System.out.println("CPU Usage: " + monitor.cpuUsage());
         }
+    }
+
+    private static String secsInDaysAndHours(long seconds) {
+        long days = seconds / (60 * 60 * 24);
+        long hours = (seconds / (60 * 60)) - (days * 24);
+        return days + " days " + hours + " hours";
     }
 
     public String osName() {
@@ -74,5 +81,9 @@ public class JavaSysMon implements Monitor {
 
     public long cpuFrequency() {
         return monitor.cpuFrequency();
+    }
+
+    public long uptimeInSeconds() {
+        return monitor.uptimeInSeconds();
     }
 }

@@ -53,4 +53,10 @@ public class LinuxMonitorTest extends TestCase {
         final long cpuFrequency = monitor.cpuFrequency();
         Assert.assertEquals(2400000000l, cpuFrequency);
     }
+
+    public void testShouldReturnUptime() {
+        LinuxMonitor monitor = new LinuxMonitor(new StubFileUtils());
+        final long uptime = monitor.uptimeInSeconds();
+        Assert.assertEquals(22550744l, uptime);
+    }
 }

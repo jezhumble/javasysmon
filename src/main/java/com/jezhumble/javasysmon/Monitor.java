@@ -9,4 +9,5 @@ public interface Monitor {
     public long freeSwap();
     public int numCpus();
     public long cpuFrequency();
+    public long uptimeInSeconds();
 }
