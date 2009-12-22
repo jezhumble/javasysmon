@@ -7,7 +7,7 @@ If you’re interested in adding support for a new platform, check out Adding su
 Download latest
 ===============
 
-The current version of JavaSysMon is 0.1, released December 19th. You can get it at http://github.com/jezhumble/javasysmon/downloads
+The current version of JavaSysMon is 0.1.1, released December 22nd. You can get it at http://github.com/jezhumble/javasysmon/downloads
 
 Run it with java -jar
 
@@ -25,6 +25,8 @@ Simply put the jar in your classpath, and use it like this:
 
 import com.jezhumble.javasysmon.JavaSysMon;
 JavaSysMon monitor = new JavaSysMon();
+String osName = monitor.osName();
+long uptimeInSeconds = monitor.uptimeInSeconds();
 float cpuUsage = monitor.cpuUsage();
 long totalMemory = monitor.totalMemory();
 long freeMemory = monitor.freeMemory();
@@ -38,7 +40,7 @@ Current support and limitations
 
 Currently only supports Mac OS X, Linux, and Windows
 Supports Java 1.4 and above
-CPU speed doesn’t work on Windows, and only works for Intel CPUs on Linux
+CPU speed only works for Intel CPUs on Linux
 
 License
 =======

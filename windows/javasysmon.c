@@ -13,7 +13,7 @@
 
 static SYSTEM_INFO system_info;
 static int num_cpu;
-static ULONGLONG p_idle, p_kernel, p_user;
+static ULONGLONG p_idle, p_kernel, p_user, cpu_frequency;
 static float p_cpu_usage;
 
 static ULONGLONG filetime_to_int64 (FILETIME* filetime)
@@ -29,10 +29,23 @@ static ULONGLONG filetime_to_int64 (FILETIME* filetime)
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 {
   FILETIME idletime, kerneltime, usertime;
+  DWORD dwValue;
+  HKEY hKey;
+  DWORD dwType=REG_DWORD;
+  DWORD dwSize=sizeof(DWORD);
 
   // Get some system information that won't change that we'll need later on
   GetSystemInfo (&system_info);
   num_cpu = system_info.dwNumberOfProcessors;
+
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+	  "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+	  0L, KEY_QUERY_VALUE, &hKey) == 0) {
+		  if (RegQueryValueEx(hKey, "~MHz", NULL, &dwType,(LPBYTE)&dwValue, &dwSize) == 0) {
+			cpu_frequency = 1000 * 1000 * dwValue;
+		  }
+		  RegCloseKey(hKey);
+  }
 
   // Initialise ticks
   GetSystemTimes(&idletime, &kerneltime, &usertime);
@@ -115,5 +128,11 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_numCpus (JNI
 
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuFrequency (JNIEnv *env, jobject object)
 {
-  return (jlong)0;
+  return (jlong) cpu_frequency;
+}
+
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_uptimeInSeconds (JNIEnv *env, jobject object)
+{
+  // only works up to 49.7 days. There's GetTickCount64 for Vista / Server 2008.
+  return (jlong) GetTickCount() / 1000;
 }
