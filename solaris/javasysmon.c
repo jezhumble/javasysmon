@@ -7,8 +7,19 @@
  *  Licensed under the terms of the New BSD license.
  */
 #include "javasysmon.h"
+#include <unistd.h>
 #include <kstat.h>
 #include <jni.h>
+
+static int num_cpus;
+static int pagesize;
+
+JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
+{
+  num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  pagesize = sysconf(_SC_PAGESIZE);
+  return JNI_VERSION_1_2;
+}
 
 /*
  * Class:     com_jezhumble_javasysmon_SolarisMonitor
@@ -67,7 +78,7 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_freeSwap (J
  */
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_numCpus (JNIEnv *env, jobject obj)
 {
-  return (jint) 0;
+  return (jint) num_cpus;
 }
 
 /*
@@ -96,5 +107,28 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuFrequenc
  */
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_uptimeInSeconds (JNIEnv *env, jobject obj)
 {
-  return (jlong) 0;
+  struct timeval secs;
+  kstat_ctl_t   *kc; 
+  kstat_t       *ksp; 
+  kstat_named_t *knp; 
+  unsigned long long uptime;
+
+  if (gettimeofday(&secs, NULL) != 0) {
+    return (jlong) 0;
+  }
+  uptime = (unsigned long long) secs.tv_sec;
+
+  kc = kstat_open();
+  if ((ksp = kstat_lookup(kc, "unix", 0, "system_misc")) == NULL) {
+    fprintf(stderr, "%s\n", "ERROR: Can't read boot time.");
+    return 0;
+  }
+  if ((kstat_read(kc, ksp, NULL) != -1) &&
+  /* lookup the boot time record */
+    ((knp = kstat_data_lookup(ksp, "boot_time")) != NULL)) {
+      return (jlong) (uptime - knp->value.ui32);
+  } else {
+    return 0;
+  }
 }
+
