@@ -1,2 +1,3 @@
 #!/bin/sh
 cc -G -I/usr/java/include -I/usr/java/include/solaris -h libjavasysmonsolx86.so -lkstat -o libjavasysmonsolx86.so javasysmon.c
+cp *.so ../lib/native/
