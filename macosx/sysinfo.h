@@ -71,6 +71,14 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency
  JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_uptimeInSeconds
    (JNIEnv *, jobject);
 
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    numCpus
+ * Signature: ()I
+ */
+ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_currentPid
+   (JNIEnv *, jobject);
+	
 #ifdef __cplusplus
 }
 #endif

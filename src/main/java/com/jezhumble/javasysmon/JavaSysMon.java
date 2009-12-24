@@ -34,6 +34,7 @@ public class JavaSysMon implements Monitor {
         } else {
             System.out.println("OS name: " + monitor.osName());
             System.out.println("Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()));
+            System.out.println("Current PID: " + monitor.currentPid());
             System.out.println("Number of CPUs: " + monitor.numCpus());
             System.out.println("CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
             System.out.println("Total memory: " + monitor.totalMemory() / (1024*1024) + " Mb");
@@ -86,5 +87,9 @@ public class JavaSysMon implements Monitor {
 
     public long uptimeInSeconds() {
         return monitor.uptimeInSeconds();
+    }
+
+    public int currentPid() {
+        return monitor.currentPid();
     }
 }

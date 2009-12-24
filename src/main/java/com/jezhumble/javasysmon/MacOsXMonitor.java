@@ -30,4 +30,5 @@ public class MacOsXMonitor implements Monitor {
     public native int numCpus();
     public native long cpuFrequency();
     public native long uptimeInSeconds();
+    public native int currentPid();
 }

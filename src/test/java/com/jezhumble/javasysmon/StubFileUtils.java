@@ -11,6 +11,9 @@ public class StubFileUtils extends FileUtils {
         if (fileName.equals("/proc/uptime")) {
             testFile = getTestFile("test_uptime");
         }
+        if (fileName.equals("/proc/self/stat")) {
+            testFile = getTestFile("test_self_stat");
+        }
         if (fileName.equals("/proc/meminfo")) {
             testFile = getTestFile("test_meminfo");
         }

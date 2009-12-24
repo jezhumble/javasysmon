@@ -252,3 +252,14 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_uptimeInSec
   }
 }
 
+/*
+ * Class:     com_jezhumble_javasysmon_SolarisMonitor
+ * Method:    currentPid
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_currentPid (JNIEnv *env, jobject obj)
+{
+  return (jint) getpid();
+}
+
+

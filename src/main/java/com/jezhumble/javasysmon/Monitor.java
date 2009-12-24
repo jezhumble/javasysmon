@@ -10,4 +10,5 @@ public interface Monitor {
     public int numCpus();
     public long cpuFrequency();
     public long uptimeInSeconds();
+    public int currentPid();
 }

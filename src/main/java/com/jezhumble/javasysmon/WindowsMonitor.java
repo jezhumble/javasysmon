@@ -31,6 +31,7 @@ public class WindowsMonitor implements Monitor {
     public native long totalSwap();
     public native long freeSwap();
     public native int numCpus();
+    public native int currentPid();
     public native long cpuFrequency();
     public native long uptimeInSeconds();
 }

@@ -13,6 +13,7 @@
 #include <mach/mach_error.h>
 #include <mach/mach_host.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 static int pageSize = 0;
 static unsigned long long p_userticks, p_systicks, p_idleticks;
@@ -237,4 +238,9 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_uptimeInSeco
 	uptime -= (unsigned long long) secs.tv_sec; 
 	
 	return (jlong) uptime;
+}
+
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_currentPid (JNIEnv *env, jobject object)
+{
+	return (jint) getpid();
 }

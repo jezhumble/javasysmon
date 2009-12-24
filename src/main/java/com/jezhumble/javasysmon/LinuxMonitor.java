@@ -23,6 +23,8 @@ public class LinuxMonitor implements Monitor {
             Pattern.compile("model name[^@]*@\\s+([0-9.A-Za-z]*)", Pattern.MULTILINE);
     private static final Pattern UPTIME_PATTERN =
             Pattern.compile("([\\d]*).*");
+    private static final Pattern PID_PATTERN =
+            Pattern.compile("([\\d]*).*");
 
     private FileUtils fileUtils;
     private String previousJiffies;
@@ -111,6 +113,11 @@ public class LinuxMonitor implements Monitor {
     public long uptimeInSeconds() {
         String uptime = fileUtils.runRegexOnFile(UPTIME_PATTERN, "/proc/uptime");
         return Long.parseLong(uptime);
+    }
+
+    public int currentPid() {
+        String pid = fileUtils.runRegexOnFile(PID_PATTERN, "/proc/self/stat");
+        return Integer.parseInt(pid);
     }
 
     private long getMultiplier(char multiplier) {

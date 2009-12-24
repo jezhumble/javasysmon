@@ -71,6 +71,14 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuFrequenc
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_uptimeInSeconds
   (JNIEnv *, jobject);
 
+/*
+ * Class:     com_jezhumble_javasysmon_WindowsMonitor
+ * Method:    currentPid
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_currentPid
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

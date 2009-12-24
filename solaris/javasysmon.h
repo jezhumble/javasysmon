@@ -71,6 +71,14 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuFrequenc
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_uptimeInSeconds
   (JNIEnv *, jobject);
 
+/*
+ * Class:     com_jezhumble_javasysmon_SolarisMonitor
+ * Method:    currentPid
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_currentPid
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

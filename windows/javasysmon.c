@@ -13,6 +13,7 @@
 
 static SYSTEM_INFO system_info;
 static int num_cpu;
+static DWORD current_pid;
 static ULONGLONG p_idle, p_kernel, p_user, cpu_frequency;
 static float p_cpu_usage;
 
@@ -37,6 +38,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
   // Get some system information that won't change that we'll need later on
   GetSystemInfo (&system_info);
   num_cpu = system_info.dwNumberOfProcessors;
+
+  current_pid = GetCurrentProcessId();
 
   if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
 	  "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
@@ -135,4 +138,9 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_uptimeInSec
 {
   // only works up to 49.7 days. There's GetTickCount64 for Vista / Server 2008.
   return (jlong) GetTickCount() / 1000;
+}
+
+JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_currentPid (JNIEnv *env, jobject object)
+{
+  return (jint) current_pid;
 }

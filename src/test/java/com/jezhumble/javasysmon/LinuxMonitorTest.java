@@ -59,4 +59,10 @@ public class LinuxMonitorTest extends TestCase {
         final long uptime = monitor.uptimeInSeconds();
         Assert.assertEquals(22550744l, uptime);
     }
+
+    public void testShouldReturnPid() {
+        LinuxMonitor monitor = new LinuxMonitor(new StubFileUtils());
+        final int pid = monitor.currentPid();
+        Assert.assertEquals(31912, pid);
+    }
 }
