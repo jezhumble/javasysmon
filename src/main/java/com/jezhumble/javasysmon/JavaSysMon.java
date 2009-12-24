@@ -41,7 +41,7 @@ public class JavaSysMon implements Monitor {
             System.out.println("Total swap: " + monitor.totalSwap() / (1024*1024) + " Mb");
             System.out.println("Free swap: " + monitor.freeSwap() / (1024*1024) + " Mb");
             System.out.println("Sampling CPU usage...");
-            Thread.sleep(5000);
+            Thread.sleep(500);
             System.out.println("CPU Usage: " + monitor.cpuUsage());
         }
     }

@@ -14,6 +14,7 @@
 #include <sys/swap.h>
 #include <kstat.h>
 #include <stdio.h>
+#include <string.h>
 #include <jni.h>
 
 #define MAXSTRSIZE 80
@@ -23,37 +24,38 @@ static int pagesize;
 static unsigned long long phys_mem, p_idle_ticks, p_total_ticks;
 static float p_cpu_usage;
 
-JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
+int get_total_ticks(unsigned long long *idle, unsigned long long *user, unsigned long long *kernel, unsigned long long *wait)
 {
   kstat_ctl_t   *kc;  
   kstat_t       *ksp;  
-  cpu_sys_stats_t *cpu_stats;
+  struct cpu_stat cpu_stats;
   int i;
-  unsigned long long idle_ticks, total_ticks;
-
-  num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-  pagesize = sysconf(_SC_PAGESIZE);
-  phys_mem = sysconf(_SC_PHYS_PAGES) * pagesize;
-  idle_ticks = total_ticks = 0;
 
   kc = kstat_open();
   for (i = 0; i < num_cpus; i++) {
-    if ((ksp = kstat_lookup(kc, "cpu", i, "sys")) != NULL) {
-      kstat_read(kc, ksp, NULL);
-      cpu_stats = (cpu_sys_stats_t *)(ksp->ks_data);
-      idle_ticks += cpu_stats->cpu_ticks_idle;
-      total_ticks += cpu_stats->cpu_ticks_idle;
-      total_ticks += cpu_stats->cpu_ticks_user;
-      total_ticks += cpu_stats->cpu_ticks_kernel;
-      total_ticks += cpu_stats->cpu_ticks_wait;
+    if ((ksp = kstat_lookup(kc, "cpu_stat", -1, "cpu_stat0")) != NULL) {
+      kstat_read(kc, ksp, &cpu_stats);
+      *idle += cpu_stats.cpu_sysinfo.cpu[CPU_IDLE];
+      *user += cpu_stats.cpu_sysinfo.cpu[CPU_USER];
+      *kernel += cpu_stats.cpu_sysinfo.cpu[CPU_KERNEL];
+      *wait += cpu_stats.cpu_sysinfo.cpu[CPU_WAIT];
     }
   }
-  p_idle_ticks = idle_ticks;
-  p_total_ticks = total_ticks;
-  p_cpu_usage = 0;
+}
 
-  printf("%s\n", "Starting");
-  printf("Idle: %llu Total: %llu\n", idle_ticks, total_ticks);
+JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
+{
+  unsigned long long idle_ticks, total_ticks;
+
+  idle_ticks = total_ticks = 0;
+  num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  pagesize = sysconf(_SC_PAGESIZE);
+  phys_mem = sysconf(_SC_PHYS_PAGES) * pagesize;
+
+  get_total_ticks(&idle_ticks, &total_ticks, &total_ticks, &total_ticks);
+  p_idle_ticks = idle_ticks;
+  p_total_ticks = total_ticks + idle_ticks;
+  p_cpu_usage = 0;
 
   return JNI_VERSION_1_2;
 }
@@ -73,20 +75,9 @@ JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuUsage (
 
   idle_ticks = total_ticks = 0;
 
-  kc = kstat_open();
-  for (i = 0; i < num_cpus; i++) {
-    if ((ksp = kstat_lookup(kc, "cpu", i, "sys")) != NULL) {
-      kstat_read(kc, ksp, NULL);
-      cpu_stats = (cpu_sys_stats_t *)(ksp->ks_data);
-      idle_ticks += cpu_stats->cpu_ticks_idle;
-      total_ticks += cpu_stats->cpu_ticks_idle;
-      total_ticks += cpu_stats->cpu_ticks_user;
-      total_ticks += cpu_stats->cpu_ticks_kernel;
-      total_ticks += cpu_stats->cpu_ticks_wait;
-    }
-  }
+  get_total_ticks(&idle_ticks, &total_ticks, &total_ticks, &total_ticks);
+  total_ticks += idle_ticks;
 
-  printf("Idle: %llu Total: %llu\n", idle_ticks, total_ticks);
   if (idle_ticks != p_idle_ticks && total_ticks != p_total_ticks) {
     p_cpu_usage = ((float)1) - ((float)(idle_ticks - p_idle_ticks)) / ((float)(total_ticks - p_total_ticks));
     p_idle_ticks = idle_ticks;
