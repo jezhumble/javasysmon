@@ -28,16 +28,16 @@ Simply put the jar in your classpath, and use it like this:
 
     import com.jezhumble.javasysmon.JavaSysMon;
        
-    JavaSysMon monitor = new JavaSysMon();
+    JavaSysMon monitor =   new JavaSysMon();
     
-    String osName =	   monitor.osName();
+    String osName =        monitor.osName();
     long uptimeInSeconds = monitor.uptimeInSeconds();
     float cpuUsage =	   monitor.cpuUsage();
     long totalMemory =	   monitor.totalMemory();
     long freeMemory =	   monitor.freeMemory();
     long totalSwap = 	   monitor.totalSwap();
     long freeSwap = 	   monitor.freeSwap();
-    int numCpus = 	   monitor.numCpus();
+    int numCpus =          monitor.numCpus();
     long cpuFrequency =    monitor.cpuFrequency();
 
 Current support and limitations
@@ -57,6 +57,6 @@ JavaSysMon uses the NetBSD (2-line) license.
 Links
 -----
 
-Code: http://github.com/jezhumble/javasysmon
-Bugs/Features: http://github.com/arya/javasysmon/issues
-Mailing List: http://groups.google.com/group/javasysmon
+* Code: http://github.com/jezhumble/javasysmon
+* Bugs/Features: http://github.com/arya/javasysmon/issues
+* Mailing List: http://groups.google.com/group/javasysmon
