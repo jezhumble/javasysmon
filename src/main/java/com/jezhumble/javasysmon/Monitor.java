@@ -3,7 +3,7 @@ package com.jezhumble.javasysmon;
 public interface Monitor {
     public String osName();
     public int numCpus();
-    public long cpuFrequency();
+    public long cpuFrequencyInHz();
     public CpuTimes cpuTimes();
     public MemoryStats physical();
     public MemoryStats swap();

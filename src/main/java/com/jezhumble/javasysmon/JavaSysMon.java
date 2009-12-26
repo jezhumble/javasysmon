@@ -37,7 +37,7 @@ public class JavaSysMon implements Monitor {
                     "  Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()) +
                     "  Current PID: " + monitor.currentPid());
             System.out.println("Number of CPUs: " + monitor.numCpus() +
-                    "  CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
+                    "  CPU frequency: " + monitor.cpuFrequencyInHz() / (1000*1000) + " MHz");
             System.out.println("RAM " + monitor.physical() + "  SWAP " + monitor.swap());
             System.out.println("Sampling CPU usage...");
             Thread.sleep(500);
@@ -66,8 +66,8 @@ public class JavaSysMon implements Monitor {
         return monitor.numCpus();
     }
 
-    public long cpuFrequency() {
-        return monitor.cpuFrequency();
+    public long cpuFrequencyInHz() {
+        return monitor.cpuFrequencyInHz();
     }
 
     public long uptimeInSeconds() {

@@ -41,9 +41,9 @@ public class LinuxMonitor implements Monitor {
         if (System.getProperty("os.name").toLowerCase().startsWith("linux")) {
             JavaSysMon.setMonitor(this);
             JavaSysMon.addSupportedConfig("Linux (only tested with x86)");
+//  In theory, this calculation should return userHz. It doesn't seem to work though.
 //            long uptimeInSeconds = uptimeInSeconds();
 //            previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
-            // The next two lines should work in theory, but in fact they don't. Weird.
 //            long uptimeInJiffies = getTotalJiffies(previousJiffies.split("\\s+"));
 //            userHz = (int) (uptimeInJiffies / uptimeInSeconds);
         }
@@ -84,7 +84,7 @@ public class LinuxMonitor implements Monitor {
         return 0;
     }
 
-    public long cpuFrequency() {
+    public long cpuFrequencyInHz() {
         String cpuFrequencyAsString = fileUtils.runRegexOnFile(CPU_FREQ_PATTERN, "/proc/cpuinfo");
         int strLen = cpuFrequencyAsString.length();
         BigDecimal cpuFrequency = new BigDecimal(cpuFrequencyAsString.substring(0, strLen - 3));

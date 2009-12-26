@@ -27,7 +27,7 @@ public class WindowsMonitor implements Monitor {
 
     public native int numCpus();
     public native int currentPid();
-    public native long cpuFrequency();
+    public native long cpuFrequencyInHz();
     public native long uptimeInSeconds();
 
     public CpuTimes cpuTimes() {
@@ -44,5 +44,5 @@ public class WindowsMonitor implements Monitor {
 
     public ProcessInfo[] processTable() {
         return new ProcessInfo[0];
-    }    
+    }
 }

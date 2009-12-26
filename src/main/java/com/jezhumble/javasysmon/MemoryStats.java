@@ -11,11 +11,11 @@ public class MemoryStats {
         this.total = total;
     }
 
-    public long getFree() {
+    public long getFreeBytes() {
         return free;
     }
 
-    public long getTotal() {
+    public long getTotalBytes() {
         return total;
     }
 

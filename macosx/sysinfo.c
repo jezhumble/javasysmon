@@ -150,7 +150,7 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_numCpus (JNIE
 	return (jint) ncpu;	
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency (JNIEnv *env, jobject object)
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequencyInHz (JNIEnv *env, jobject object)
 {
 	int					mib[2];
 	size_t				len;

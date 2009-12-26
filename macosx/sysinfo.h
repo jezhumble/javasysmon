@@ -18,10 +18,10 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_numCpus
 
 /*
  * Class:     com_jezhumble_javasysmon_MacOsXMonitor
- * Method:    cpuFrequency
+ * Method:    cpuFrequencyInHz
  * Signature: ()I
  */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequencyInHz
   (JNIEnv *, jobject);
 
 /*

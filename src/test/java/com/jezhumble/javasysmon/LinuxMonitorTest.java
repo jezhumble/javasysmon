@@ -50,7 +50,7 @@ public class LinuxMonitorTest extends TestCase {
 
     public void testShouldCalculateCpuFrequency() {
         LinuxMonitor monitor = new LinuxMonitor(new StubFileUtils());
-        final long cpuFrequency = monitor.cpuFrequency();
+        final long cpuFrequency = monitor.cpuFrequencyInHz();
         Assert.assertEquals(2400000000l, cpuFrequency);
     }
 
