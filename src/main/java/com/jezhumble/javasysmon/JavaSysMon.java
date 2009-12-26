@@ -32,18 +32,16 @@ public class JavaSysMon implements Monitor {
                 System.err.println(config);
             }
         } else {
+            CpuTimes initialTimes = monitor.cpuTimes();
             System.out.println("OS name: " + monitor.osName() +
                     "  Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()) +
                     "  Current PID: " + monitor.currentPid());
             System.out.println("Number of CPUs: " + monitor.numCpus() +
                     "  CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
-            System.out.println("RAM total: " + monitor.totalMemory() / (1024*1024) + " Mb" +
-                    " free: " + monitor.freeMemory() / (1024*1024) + " Mb" +
-                    "  SWAP total: " + monitor.totalSwap() / (1024*1024) + " Mb" +
-                    " free: " + monitor.freeSwap() / (1024*1024) + " Mb");
+            System.out.println("RAM " + monitor.physical() + "  SWAP " + monitor.swap());
             System.out.println("Sampling CPU usage...");
             Thread.sleep(500);
-            System.out.println("CPU Usage: " + monitor.cpuUsage());
+            System.out.println("CPU Usage: " + monitor.cpuTimes().getCpuUsage(initialTimes));
             System.out.println("\n" + ProcessInfo.header());
             ProcessInfo[] processes = monitor.processTable();
             for (int i = 0; i < processes.length; i++) {
@@ -58,28 +56,10 @@ public class JavaSysMon implements Monitor {
         return days + " days " + hours + " hours";
     }
 
+    // Following are the actual stats you can get
+
     public String osName() {
         return monitor.osName();
-    }
-
-    public float cpuUsage() {
-        return monitor.cpuUsage();
-    }
-
-    public long totalMemory() {
-        return monitor.totalMemory();
-    }
-
-    public long freeMemory() {
-        return monitor.freeMemory();
-    }
-
-    public long totalSwap() {
-        return monitor.totalSwap();
-    }
-
-    public long freeSwap() {
-        return monitor.freeSwap();
     }
 
     public int numCpus() {
@@ -96,6 +76,18 @@ public class JavaSysMon implements Monitor {
 
     public int currentPid() {
         return monitor.currentPid();
+    }
+
+    public CpuTimes cpuTimes() {
+        return monitor.cpuTimes();
+    }
+
+    public MemoryStats physical() {
+        return monitor.physical();
+    }
+
+    public MemoryStats swap() {
+        return monitor.swap();
     }
 
     public ProcessInfo[] processTable() {

@@ -25,15 +25,22 @@ public class WindowsMonitor implements Monitor {
         return System.getProperty("os.name");
     }
 
-    public native float cpuUsage();
-    public native long totalMemory();
-    public native long freeMemory();
-    public native long totalSwap();
-    public native long freeSwap();
     public native int numCpus();
     public native int currentPid();
     public native long cpuFrequency();
     public native long uptimeInSeconds();
+
+    public CpuTimes cpuTimes() {
+        return new CpuTimes(0, 0, 0);
+    }
+
+    public MemoryStats physical() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public MemoryStats swap() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
     public ProcessInfo[] processTable() {
         return new ProcessInfo[0];

@@ -7,45 +7,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * Class:     com_jezhumble_javasysmon_MacOsXMonitor
- * Method:    cpuUsage
- * Signature: ()F
- */
-JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuUsage
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_jezhumble_javasysmon_MacOsXMonitor
- * Method:    totalMemory
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalMemory
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_jezhumble_javasysmon_MacOsXMonitor
- * Method:    freeMemory
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeMemory
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_jezhumble_javasysmon_MacOsXMonitor
- * Method:    totalSwap
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalSwap
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_jezhumble_javasysmon_MacOsXMonitor
- * Method:    freeSwap
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeSwap
-  (JNIEnv *, jobject);
 
 /*
  * Class:     com_jezhumble_javasysmon_MacOsXMonitor
@@ -77,6 +38,30 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency
  * Signature: ()I
  */
  JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_currentPid
+   (JNIEnv *, jobject);
+		
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    cpuTimes
+ * Signature: ()Lcom/jezhumble/javasysmon/CpuTimes;
+ */
+ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuTimes
+   (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    physical
+ * Signature: ()Lcom/jezhumble/javasysmon/MemoryStats;
+ */
+ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_physical
+   (JNIEnv *, jobject);
+
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    swap
+ * Signature: ()Lcom/jezhumble/javasysmon/MemoryStats;
+ */
+ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_swap
    (JNIEnv *, jobject);
 	
 #ifdef __cplusplus

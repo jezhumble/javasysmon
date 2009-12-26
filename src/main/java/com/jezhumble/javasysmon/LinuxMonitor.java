@@ -29,13 +29,10 @@ public class LinuxMonitor implements Monitor {
             Pattern.compile("([\\d]*).*");
 
     private FileUtils fileUtils;
-    private String previousJiffies;
-    private float previousCpuUsage = 0;
     private int userHz = 100; // Shouldn't be hardcoded. See below.
 
     LinuxMonitor(FileUtils fileUtils) {
         this.fileUtils = fileUtils;
-        previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
     }
 
     public LinuxMonitor() {
@@ -44,8 +41,8 @@ public class LinuxMonitor implements Monitor {
         if (System.getProperty("os.name").toLowerCase().startsWith("linux")) {
             JavaSysMon.setMonitor(this);
             JavaSysMon.addSupportedConfig("Linux (only tested with x86)");
-            long uptimeInSeconds = uptimeInSeconds();
-            previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
+//            long uptimeInSeconds = uptimeInSeconds();
+//            previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
             // The next two lines should work in theory, but in fact they don't. Weird.
 //            long uptimeInJiffies = getTotalJiffies(previousJiffies.split("\\s+"));
 //            userHz = (int) (uptimeInJiffies / uptimeInSeconds);
@@ -56,42 +53,20 @@ public class LinuxMonitor implements Monitor {
         return "Linux"; // TODO: distro detection
     }
 
-    public float cpuUsage() {
-        String jiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
-        String[] parsedPreviousJiffies = previousJiffies.split("\\s+");
-        String[] parsedJiffies = jiffies.split("\\s+");
-        long totalPreviousJiffies = getTotalJiffies(parsedPreviousJiffies);
-        long totalJiffies = getTotalJiffies(parsedJiffies);
-        long idlePreviousJiffies = Long.parseLong(parsedPreviousJiffies[3]);
-        long idleJiffies = Long.parseLong(parsedJiffies[3]);
-        previousJiffies = jiffies;
-        if (idlePreviousJiffies != idleJiffies && totalPreviousJiffies != totalJiffies) {
-            float idleTicksDiff = idleJiffies - idlePreviousJiffies;
-            float totalTicksDiff = totalJiffies - totalPreviousJiffies;
-            previousCpuUsage = 1 - idleTicksDiff / totalTicksDiff;
-            return 1 - idleTicksDiff / totalTicksDiff;
-        }
-        return previousCpuUsage;
-    }
-
-    public long totalMemory() {
+    public MemoryStats physical() {
         String totalMemory = fileUtils.runRegexOnFile(TOTAL_MEMORY_PATTERN, "/proc/meminfo");
-        return Long.parseLong(totalMemory) * 1024;
-    }
-
-    public long freeMemory() {
+        long total = Long.parseLong(totalMemory) * 1024;
         String freeMemory = fileUtils.runRegexOnFile(FREE_MEMORY_PATTERN, "/proc/meminfo");
-        return Long.parseLong(freeMemory) * 1024;
+        long free = Long.parseLong(freeMemory) * 1024;
+        return new MemoryStats(free, total);
     }
 
-    public long totalSwap() {
+    public MemoryStats swap() {
         String totalMemory = fileUtils.runRegexOnFile(TOTAL_SWAP_PATTERN, "/proc/meminfo");
-        return Long.parseLong(totalMemory) * 1024;
-    }
-
-    public long freeSwap() {
+        long total = Long.parseLong(totalMemory) * 1024;
         String freeMemory = fileUtils.runRegexOnFile(FREE_SWAP_PATTERN, "/proc/meminfo");
-        return Long.parseLong(freeMemory) * 1024;
+        long free = Long.parseLong(freeMemory) * 1024;
+        return new MemoryStats(free, total);
     }
 
     public int numCpus() {
@@ -158,11 +133,22 @@ public class LinuxMonitor implements Monitor {
         return 0;
     }
 
-    private long getTotalJiffies(String[] jiffyString) {
-        long totalJiffies = 0;
-        for (int i = 0; i < jiffyString.length; i++) {
-            totalJiffies += Long.parseLong(jiffyString[i]);
+    public CpuTimes cpuTimes() {
+        String[] parsedJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat").split("\\s+");
+        long userJiffies = Long.parseLong(parsedJiffies[0]) + Long.parseLong(parsedJiffies[1]);
+        long idleJiffies = Long.parseLong(parsedJiffies[3]);
+        long systemJiffies = Long.parseLong(parsedJiffies[2]);
+        // this is for Linux >= 2.6
+        if (parsedJiffies.length > 4) {
+            for (int i = 4; i < parsedJiffies.length; i++) {
+                systemJiffies += Long.parseLong(parsedJiffies[i]);
+            }
         }
-        return totalJiffies;
+        return new CpuTimes(toMillis(userJiffies), toMillis(systemJiffies), toMillis(idleJiffies));
+    }
+
+    private long toMillis(long jiffies) {
+        int multiplier = 1000 / userHz;
+        return jiffies * multiplier;
     }
 }

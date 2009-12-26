@@ -86,10 +86,6 @@ public class ProcessInfo {
                 stringFormat(command, 23);
     }
 
-    // gotta love this hack
-    final private static String PADDING =
-            "                                                                                   ";
-
     private static String stringFormat(int intToFormat, int fieldSize) {
         return stringFormat(Integer.toString(intToFormat), fieldSize, true);
     }
@@ -112,6 +108,10 @@ public class ProcessInfo {
                     stringToFormat + PADDING.substring(0, fieldSize - stringToFormat.length());
         }
     }
+
+    // gotta love this hack
+    final private static String PADDING =
+            "                                                                                   ";
 
     private static String formatMillisecs(long millisecs) {
         long secs = millisecs / 1000;

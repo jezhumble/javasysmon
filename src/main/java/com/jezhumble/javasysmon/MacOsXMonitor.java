@@ -22,15 +22,14 @@ public class MacOsXMonitor implements Monitor {
         return System.getProperty("os.name") + " " + System.getProperty("os.version");
     }
 
-    public native float cpuUsage();
-    public native long totalMemory();
-    public native long freeMemory();
-    public native long totalSwap();
-    public native long freeSwap();
     public native int numCpus();
     public native long cpuFrequency();
     public native long uptimeInSeconds();
     public native int currentPid();
+    public native CpuTimes cpuTimes();
+    public native MemoryStats physical();
+    public native MemoryStats swap();
+
     public ProcessInfo[] processTable() {
         return new ProcessInfo[0];
     }

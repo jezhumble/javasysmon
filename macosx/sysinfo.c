@@ -16,9 +16,8 @@
 #include <unistd.h>
 
 static int pageSize = 0;
-static unsigned long long p_userticks, p_systicks, p_idleticks;
-static float p_cpuusage;
 static mach_port_t sysmonport;
+static unsigned long long total_memory;
 
 int sample_cpu_ticks(host_info_t host_info)
 {
@@ -39,7 +38,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 	// Get some system information that won't change that we'll need later on
 	int				mib[2];
 	size_t			len;
-	unsigned long long p_totalticks;
 	sysmonport = mach_host_self();
 	
 	mib[0] = CTL_HW;
@@ -50,101 +48,73 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 		perror("sysctl");
 	}
 	
-	// Sample CPU ticks
-	host_cpu_load_info_data_t	cpu_stats;
-	if (sample_cpu_ticks((host_info_t) &cpu_stats) == 0) {
-		p_userticks = cpu_stats.cpu_ticks[CPU_STATE_USER] + cpu_stats.cpu_ticks[CPU_STATE_NICE];
-		p_systicks = cpu_stats.cpu_ticks[CPU_STATE_SYSTEM];
-		p_idleticks = cpu_stats.cpu_ticks[CPU_STATE_IDLE];
-		p_totalticks = p_userticks + p_systicks + p_idleticks;
-		p_cpuusage = ((float)1) - ((float)p_idleticks) / ((float)p_totalticks);
-
-	} else {
-		p_userticks = p_systicks = p_idleticks = p_cpuusage = 0;
-	}
+	mib[0] = CTL_HW;
+	mib[1] = HW_MEMSIZE;
+	len = sizeof(total_memory);
+	
+	if (sysctl(mib, 2, &total_memory, &len, NULL, 0) != 0) {
+		perror("sysctl");
+	}	
 	
 	return JNI_VERSION_1_2;
 }
 
-JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuUsage (JNIEnv *env, jobject obj)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuTimes (JNIEnv *env, jobject obj)
 {
 	host_cpu_load_info_data_t	cpu_stats;
-	unsigned long long			userticks, systicks, idleticks, totalticks, p_totalticks;
-	float						cpuusage;
+	unsigned long long			userticks, systicks, idleticks;
+	jclass		cpu_times_class;
+	jmethodID	cpu_times_constructor;
+	jobject		cpu_times;
 	
 	if (sample_cpu_ticks((host_info_t) &cpu_stats) == 0) {
-		// Get current ticks
 		userticks = cpu_stats.cpu_ticks[CPU_STATE_USER] + cpu_stats.cpu_ticks[CPU_STATE_NICE];
 		systicks = cpu_stats.cpu_ticks[CPU_STATE_SYSTEM];
 		idleticks = cpu_stats.cpu_ticks[CPU_STATE_IDLE];
-		
-		// Calculate difference
-		totalticks = userticks + systicks + idleticks;
-		p_totalticks = p_userticks + p_systicks + p_idleticks;
-		if (totalticks == p_totalticks || idleticks == p_idleticks) {
-			cpuusage = p_cpuusage;
-		} else {
-			cpuusage = ((float)1) - ((float)(idleticks - p_idleticks)) / ((float)(totalticks - p_totalticks));
-			
-			// Reset counters
-			p_userticks = userticks;
-			p_systicks = systicks;
-			p_idleticks = idleticks;
-			p_cpuusage = cpuusage;
-		}
-		
-		return (jfloat)cpuusage;
+	
+		cpu_times_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/CpuTimes");
+		cpu_times_constructor = (*env)->GetMethodID(env, cpu_times_class, "<init>", "(JJJ)V");
+		cpu_times = (*env)->NewObject(env, cpu_times_class, cpu_times_constructor, (jlong) userticks, (jlong) systicks, (jlong) idleticks);
+		(*env)->DeleteLocalRef(env, cpu_times_class);
+		return cpu_times;
 	} else {
-		return (jfloat)0;
+		return NULL;
 	}
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalMemory (JNIEnv *env, jobject obj)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_physical (JNIEnv *env, jobject obj)
 {
-	int					mib[2];
-	size_t				len;
-	unsigned long long	totalMemory;
+	kern_return_t				error;
+	mach_msg_type_number_t		count;
+	struct vm_statistics		r_vm_info;
+	unsigned long long			mem_free;
+	jclass		memory_stats_class;
+	jmethodID	memory_stats_constructor;
+	jobject		memory_stats;
 	
-	mib[0] = CTL_HW;
-	mib[1] = HW_MEMSIZE;
-	len = sizeof(totalMemory);
-
-	if (sysctl(mib, 2, &totalMemory, &len, NULL, 0) != 0) {
-		perror("sysctl");
-		totalMemory = 0;
-	}
-	
-	return (jlong)totalMemory;		
-}
-
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeMemory (JNIEnv *env, jobject obj)
-{
-	 kern_return_t				error;
-	 mach_msg_type_number_t		count;
-	 struct vm_statistics		r_vm_info;
-	 unsigned long long			mem_free;
-	 
-	 count = sizeof(r_vm_info) / sizeof(natural_t);
-
-	 error = host_statistics(sysmonport, HOST_VM_INFO, (host_info_t) &r_vm_info, &count);
-
+	count = sizeof(r_vm_info) / sizeof(natural_t);
+	error = host_statistics(sysmonport, HOST_VM_INFO, (host_info_t) &r_vm_info, &count);
 	if (error != KERN_SUCCESS) {
-		 printf("Error trying to get free memory: %s\n", mach_error_string(error));
-		 mem_free = 0;
-		 goto RETURN;
-	 }
+		printf("Error trying to get free memory: %s\n", mach_error_string(error));
+		return NULL;
+	}
+	mem_free = (unsigned long long) r_vm_info.free_count * pageSize;
 	 
-	 mem_free = (unsigned long long) r_vm_info.free_count * pageSize;
-	 
-	 RETURN:
-	 return (jlong) mem_free;
+	memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
+	memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
+	memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) mem_free, (jlong) total_memory);
+	(*env)->DeleteLocalRef(env, memory_stats_class);
+	return memory_stats;
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalSwap (JNIEnv *env, jobject obj)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_swap (JNIEnv *env, jobject obj)
 {
 	int					mib[2];
 	size_t				len;
 	struct xsw_usage	xsu;
+	jclass		memory_stats_class;
+	jmethodID	memory_stats_constructor;
+	jobject		memory_stats;
 	
 	mib[0] = CTL_VM;
 	mib[1] = VM_SWAPUSAGE;
@@ -154,26 +124,12 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_totalSwap (J
 		perror("sysctl");
 		return (jlong) 0;
 	}
-	
-	return (jlong) xsu.xsu_total;			
-}
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_freeSwap (JNIEnv *env, jobject obj)
-{
-	int					mib[2];
-	size_t				len;
-	struct xsw_usage	xsu;
-	
-	mib[0] = CTL_VM;
-	mib[1] = VM_SWAPUSAGE;
-	len = sizeof(xsu);
-	
-	if (sysctl(mib, 2, &xsu, &len, NULL, 0) != 0) {
-		perror("sysctl");
-		return (jlong) 0;
-	}
-	
-	return (jlong) xsu.xsu_avail;	
+	memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
+	memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
+	memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) xsu.xsu_avail, (jlong) xsu.xsu_total);
+	(*env)->DeleteLocalRef(env, memory_stats_class);
+	return memory_stats;
 }
 
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_numCpus (JNIEnv *env, jobject object)
@@ -243,4 +199,9 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_uptimeInSeco
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_currentPid (JNIEnv *env, jobject object)
 {
 	return (jint) getpid();
+}
+
+JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_processTable (JNIEnv *env, jobject object)
+{
+	return NULL;
 }

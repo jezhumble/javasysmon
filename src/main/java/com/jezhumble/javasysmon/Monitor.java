@@ -2,13 +2,11 @@ package com.jezhumble.javasysmon;
 
 public interface Monitor {
     public String osName();
-    public float cpuUsage();
-    public long totalMemory();
-    public long freeMemory();
-    public long totalSwap();
-    public long freeSwap();
     public int numCpus();
     public long cpuFrequency();
+    public CpuTimes cpuTimes();
+    public MemoryStats physical();
+    public MemoryStats swap();
     public long uptimeInSeconds();
     public int currentPid();
     ProcessInfo[] processTable();
