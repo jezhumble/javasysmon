@@ -31,4 +31,7 @@ public class MacOsXMonitor implements Monitor {
     public native long cpuFrequency();
     public native long uptimeInSeconds();
     public native int currentPid();
+    public ProcessInfo[] processTable() {
+        return new ProcessInfo[0];
+    }
 }

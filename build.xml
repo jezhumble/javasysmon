@@ -19,7 +19,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac destdir="target/classes" target="1.4" source="1.4">
+    <javac destdir="target/classes" target="1.4" source="1.4" debug="true">
       <src path="src/main/java" />
     </javac>
   </target>

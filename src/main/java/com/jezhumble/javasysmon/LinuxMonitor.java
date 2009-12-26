@@ -1,10 +1,12 @@
 package com.jezhumble.javasysmon;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// Network stats will come from /proc/net/dev; disk stats will be from /proc/diskstats
 public class LinuxMonitor implements Monitor {
 
     private static final Pattern TOTAL_MEMORY_PATTERN =
@@ -29,6 +31,7 @@ public class LinuxMonitor implements Monitor {
     private FileUtils fileUtils;
     private String previousJiffies;
     private float previousCpuUsage = 0;
+    private int userHz = 100; // Shouldn't be hardcoded. See below.
 
     LinuxMonitor(FileUtils fileUtils) {
         this.fileUtils = fileUtils;
@@ -41,7 +44,11 @@ public class LinuxMonitor implements Monitor {
         if (System.getProperty("os.name").toLowerCase().startsWith("linux")) {
             JavaSysMon.setMonitor(this);
             JavaSysMon.addSupportedConfig("Linux (only tested with x86)");
-            previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");        
+            long uptimeInSeconds = uptimeInSeconds();
+            previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
+            // The next two lines should work in theory, but in fact they don't. Weird.
+//            long uptimeInJiffies = getTotalJiffies(previousJiffies.split("\\s+"));
+//            userHz = (int) (uptimeInJiffies / uptimeInSeconds);
         }
     }
 
@@ -120,6 +127,25 @@ public class LinuxMonitor implements Monitor {
         return Integer.parseInt(pid);
     }
 
+    public ProcessInfo[] processTable() {
+        try {
+            final String[] pids = new File("/proc").list(FileUtils.PROCESS_DIRECTORY_FILTER);
+            ProcessInfo[] processTable = new ProcessInfo[pids.length];
+            for (int i = 0; i < pids.length; i++) {
+                String stat = fileUtils.slurp("/proc/" + pids[i] + "/stat");
+                String status = fileUtils.slurp("/proc/" + pids[i] + "/status");
+                String cmdline = fileUtils.slurp("/proc/" + pids[i] + "/cmdline");
+                UnixPasswdParser passwdParser = new UnixPasswdParser();
+                final LinuxProcessInfoParser parser = new LinuxProcessInfoParser(stat, status, cmdline, passwdParser.parse(), userHz);
+                processTable[i] = parser.parse();
+            }
+            return processTable;
+        } catch (IOException ioe) {
+            System.err.println("Error getting process table: " + ioe.getMessage());
+            return new ProcessInfo[0];
+        }
+    }
+
     private long getMultiplier(char multiplier) {
         switch (multiplier) {
             case 'G':
@@ -138,5 +164,5 @@ public class LinuxMonitor implements Monitor {
             totalJiffies += Long.parseLong(jiffyString[i]);
         }
         return totalJiffies;
-    }    
+    }
 }

@@ -32,18 +32,23 @@ public class JavaSysMon implements Monitor {
                 System.err.println(config);
             }
         } else {
-            System.out.println("OS name: " + monitor.osName());
-            System.out.println("Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()));
-            System.out.println("Current PID: " + monitor.currentPid());
-            System.out.println("Number of CPUs: " + monitor.numCpus());
-            System.out.println("CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
-            System.out.println("Total memory: " + monitor.totalMemory() / (1024*1024) + " Mb");
-            System.out.println("Free memory: " + monitor.freeMemory() / (1024*1024) + " Mb");
-            System.out.println("Total swap: " + monitor.totalSwap() / (1024*1024) + " Mb");
-            System.out.println("Free swap: " + monitor.freeSwap() / (1024*1024) + " Mb");
+            System.out.println("OS name: " + monitor.osName() +
+                    "  Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()) +
+                    "  Current PID: " + monitor.currentPid());
+            System.out.println("Number of CPUs: " + monitor.numCpus() +
+                    "  CPU frequency: " + monitor.cpuFrequency() / (1000*1000) + " MHz");
+            System.out.println("RAM total: " + monitor.totalMemory() / (1024*1024) + " Mb" +
+                    " free: " + monitor.freeMemory() / (1024*1024) + " Mb" +
+                    "  SWAP total: " + monitor.totalSwap() / (1024*1024) + " Mb" +
+                    " free: " + monitor.freeSwap() / (1024*1024) + " Mb");
             System.out.println("Sampling CPU usage...");
             Thread.sleep(500);
             System.out.println("CPU Usage: " + monitor.cpuUsage());
+            System.out.println("\n" + ProcessInfo.header());
+            ProcessInfo[] processes = monitor.processTable();
+            for (int i = 0; i < processes.length; i++) {
+                System.out.println(processes[i].toString());
+            }
         }
     }
 
@@ -91,5 +96,9 @@ public class JavaSysMon implements Monitor {
 
     public int currentPid() {
         return monitor.currentPid();
+    }
+
+    public ProcessInfo[] processTable() {
+        return monitor.processTable();
     }
 }

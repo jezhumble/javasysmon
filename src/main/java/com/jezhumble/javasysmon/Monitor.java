@@ -11,4 +11,5 @@ public interface Monitor {
     public long cpuFrequency();
     public long uptimeInSeconds();
     public int currentPid();
+    ProcessInfo[] processTable();
 }

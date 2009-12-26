@@ -34,4 +34,8 @@ public class WindowsMonitor implements Monitor {
     public native int currentPid();
     public native long cpuFrequency();
     public native long uptimeInSeconds();
+
+    public ProcessInfo[] processTable() {
+        return new ProcessInfo[0];
+    }    
 }
