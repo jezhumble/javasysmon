@@ -14,8 +14,7 @@
 static SYSTEM_INFO system_info;
 static int num_cpu;
 static DWORD current_pid;
-static ULONGLONG p_idle, p_kernel, p_user, cpu_frequency;
-static float p_cpu_usage;
+static ULONGLONG cpu_frequency;
 
 static ULONGLONG filetime_to_int64 (FILETIME* filetime)
 {
@@ -29,7 +28,6 @@ static ULONGLONG filetime_to_int64 (FILETIME* filetime)
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 {
-  FILETIME idletime, kerneltime, usertime;
   DWORD dwValue;
   HKEY hKey;
   DWORD dwType=REG_DWORD;
@@ -50,78 +48,58 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 		  RegCloseKey(hKey);
   }
 
-  // Initialise ticks
-  GetSystemTimes(&idletime, &kerneltime, &usertime);
-  p_idle = filetime_to_int64(&idletime);
-  p_kernel = filetime_to_int64(&kerneltime);
-  p_user = filetime_to_int64(&usertime);
-  p_cpu_usage = 0;
-  //printf("idle: %llu kernel: %llu user: %llu\n", p_idle / 10000, p_kernel / 10000, p_user / 10000);
-
   return JNI_VERSION_1_2;
 }
 
-JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuUsage (JNIEnv *env, jobject object)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuTimes (JNIEnv *env, jobject obj)
 {
-  ULONGLONG idle, kernel, user, idle_diff, kernel_diff, user_diff, total_diff;
+  ULONGLONG idle, kernel, user;
   float cpu_usage;
   FILETIME idletime, kerneltime, usertime;
+  jclass		cpu_times_class;
+  jmethodID	cpu_times_constructor;
+  jobject		cpu_times;
 
   GetSystemTimes(&idletime, &kerneltime, &usertime);
   idle = filetime_to_int64(&idletime);
-  kernel = filetime_to_int64(&kerneltime);
+  kernel = filetime_to_int64(&kerneltime) - idle;
   user = filetime_to_int64(&usertime);
-  //printf("idle: %llu kernel: %llu user: %llu\n", idle / 10000, kernel / 10000, user / 10000);
 
-  idle_diff = idle - p_idle;
-  kernel_diff = kernel - p_kernel;
-  user_diff = user - p_user;
-
-  // you'd think that total CPU is idle + kernel + user. But the idle process
-  // is part of the kernel time (this is undocumented, but the calculation comes
-  // out wrong otherwise.
-
-  total_diff = kernel_diff + user_diff;
-
-  if (idle_diff == 0 || total_diff == 0) {
-    cpu_usage = p_cpu_usage;
-  } else {
-	  //printf("Idle diff: %llu Kernel diff: %llu User diff: %llu Total diff: %llu\n", idle_diff, kernel_diff, user_diff, total_diff);
-    cpu_usage = ((float)(total_diff - idle_diff)) / ((float)total_diff);
-    // Reset counters
-    p_idle = idle;
-    p_user = user;
-    p_kernel = kernel;
-  }
-  return (jfloat)cpu_usage;
+  cpu_times_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/CpuTimes");
+  cpu_times_constructor = (*env)->GetMethodID(env, cpu_times_class, "<init>", "(JJJ)V");
+  cpu_times = (*env)->NewObject(env, cpu_times_class, cpu_times_constructor, (jlong) user, (jlong) kernel, (jlong) idle);
+  (*env)->DeleteLocalRef(env, cpu_times_class);
+  return cpu_times;
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_totalMemory (JNIEnv *env, jobject object)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_physical (JNIEnv *env, jobject obj)
 {
   MEMORYSTATUS status;
+  jclass		memory_stats_class;
+  jmethodID	memory_stats_constructor;
+  jobject		memory_stats;
+
   GlobalMemoryStatus (&status);
-  return (jlong) status.dwTotalPhys;
+  memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
+  memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
+  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) status.dwAvailPhys, (jlong) status.dwTotalPhys);
+  (*env)->DeleteLocalRef(env, memory_stats_class);
+  return memory_stats;
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_freeMemory (JNIEnv *env, jobject object)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_swap (JNIEnv *env, jobject obj)
 {
   MEMORYSTATUS status;
-  GlobalMemoryStatus (&status);
-  return (jlong) status.dwAvailPhys;
-}
+  jclass		memory_stats_class;
+  jmethodID	memory_stats_constructor;
+  jobject		memory_stats;
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_totalSwap (JNIEnv *env, jobject object)
-{
-  MEMORYSTATUS status;
   GlobalMemoryStatus (&status);
-  return (jlong) status.dwTotalVirtual;
-}
-
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_freeSwap (JNIEnv *env, jobject object)
-{
-  MEMORYSTATUS status;
-  GlobalMemoryStatus (&status);
-  return (jlong) status.dwAvailVirtual;
+  memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
+  memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
+  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) status.dwAvailVirtual, (jlong) status.dwTotalVirtual);
+  (*env)->DeleteLocalRef(env, memory_stats_class);
+  return memory_stats;
 }
 
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_numCpus (JNIEnv *env, jobject object)
