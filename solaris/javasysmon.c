@@ -21,90 +21,62 @@
 
 static int num_cpus;
 static int pagesize;
-static unsigned long long phys_mem, p_idle_ticks, p_total_ticks;
-static float p_cpu_usage;
-
-int get_total_ticks(unsigned long long *idle, unsigned long long *user, unsigned long long *kernel, unsigned long long *wait)
-{
-  kstat_ctl_t   *kc;  
-  kstat_t       *ksp;  
-  struct cpu_stat cpu_stats;
-  int i;
-
-  kc = kstat_open();
-  for (i = 0; i < num_cpus; i++) {
-    if ((ksp = kstat_lookup(kc, "cpu_stat", -1, "cpu_stat0")) != NULL) {
-      kstat_read(kc, ksp, &cpu_stats);
-      *idle += cpu_stats.cpu_sysinfo.cpu[CPU_IDLE];
-      *user += cpu_stats.cpu_sysinfo.cpu[CPU_USER];
-      *kernel += cpu_stats.cpu_sysinfo.cpu[CPU_KERNEL];
-      *wait += cpu_stats.cpu_sysinfo.cpu[CPU_WAIT];
-    }
-  }
-}
+static unsigned long long phys_mem;
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 {
-  unsigned long long idle_ticks, total_ticks;
-
-  idle_ticks = total_ticks = 0;
   num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
   pagesize = sysconf(_SC_PAGESIZE);
   phys_mem = sysconf(_SC_PHYS_PAGES) * pagesize;
 
-  get_total_ticks(&idle_ticks, &total_ticks, &total_ticks, &total_ticks);
-  p_idle_ticks = idle_ticks;
-  p_total_ticks = total_ticks + idle_ticks;
-  p_cpu_usage = 0;
-
   return JNI_VERSION_1_2;
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    cpuUsage
- * Signature: ()J
- */
-JNIEXPORT jfloat JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuUsage (JNIEnv *env, jobject obj)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuTimes (JNIEnv *env, jobject obj)
 {
-  kstat_ctl_t   *kc;  
-  kstat_t       *ksp;  
-  cpu_sys_stats_t *cpu_stats;
+  kstat_ctl_t   *kc;
+  kstat_t       *ksp;
+  struct cpu_stat cpu_stats;
   int i;
-  unsigned long long idle_ticks, total_ticks;
+  unsigned long long userticks, systicks, idleticks;
+  jclass		cpu_times_class;
+  jmethodID	cpu_times_constructor;
+  jobject		cpu_times;
 
-  idle_ticks = total_ticks = 0;
-
-  get_total_ticks(&idle_ticks, &total_ticks, &total_ticks, &total_ticks);
-  total_ticks += idle_ticks;
-
-  if (idle_ticks != p_idle_ticks && total_ticks != p_total_ticks) {
-    p_cpu_usage = ((float)1) - ((float)(idle_ticks - p_idle_ticks)) / ((float)(total_ticks - p_total_ticks));
-    p_idle_ticks = idle_ticks;
-    p_total_ticks = total_ticks;
+  kc = kstat_open();
+  for (i = 0; i < num_cpus; i++) {
+    // the next line is wrong: should replace "cpu_stat0" with "cpu_stati"
+    // but my C-fu is insufficient to work out how to do this in <10 lines
+    if ((ksp = kstat_lookup(kc, "cpu_stat", -1, "cpu_stat0")) != NULL) {
+      kstat_read(kc, ksp, &cpu_stats);
+      idleticks += cpu_stats.cpu_sysinfo.cpu[CPU_IDLE];
+      userticks += cpu_stats.cpu_sysinfo.cpu[CPU_USER];
+      systicks += cpu_stats.cpu_sysinfo.cpu[CPU_KERNEL];
+      systicks += cpu_stats.cpu_sysinfo.cpu[CPU_WAIT];
+    }
   }
 
-  return (jfloat) p_cpu_usage;
+  cpu_times_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/CpuTimes");
+  cpu_times_constructor = (*env)->GetMethodID(env, cpu_times_class, "<init>", "(JJJ)V");
+  cpu_times = (*env)->NewObject(env, cpu_times_class, cpu_times_constructor, (jlong) userticks, (jlong) systicks, (jlong) idleticks);
+  (*env)->DeleteLocalRef(env, cpu_times_class);
+  return cpu_times;
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    totalMemory
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_totalMemory (JNIEnv *env, jobject obj)
-{
-  return (jlong) phys_mem;
-}
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    freeMemory
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_freeMemory (JNIEnv *env, jobject obj)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_physical (JNIEnv *env, jobject obj)
 {
-  return (jlong) sysconf(_SC_AVPHYS_PAGES) * pagesize;
+  jclass		memory_stats_class;
+  jmethodID	memory_stats_constructor;
+  jobject		memory_stats;
+  unsigned long long free_mem;
+
+  free_mem = sysconf(_SC_AVPHYS_PAGES) * pagesize;
+  memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
+  memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
+  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) free_mem, (jlong) phys_mem);
+  (*env)->DeleteLocalRef(env, memory_stats_class);
+  return memory_stats;
 }
 
 int get_swap_stats(unsigned long long *total_swap, unsigned long long *free_swap)
@@ -159,48 +131,29 @@ again:
   free(strtab);
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    totalSwap
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_totalSwap (JNIEnv *env, jobject obj)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_swap (JNIEnv *env, jobject obj)
 {
+  jclass		memory_stats_class;
+  jmethodID	memory_stats_constructor;
+  jobject		memory_stats;
   unsigned long long total_swap, free_swap;
   total_swap = free_swap = 0;
   get_swap_stats(&total_swap, &free_swap);
-  return (jlong) total_swap;
+
+  free_mem = sysconf(_SC_AVPHYS_PAGES) * pagesize;
+  memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
+  memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
+  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) free_swap, (jlong) total_swap);
+  (*env)->DeleteLocalRef(env, memory_stats_class);
+  return memory_stats;
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    freeSwap
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_freeSwap (JNIEnv *env, jobject obj)
-{
-  unsigned long long total_swap, free_swap;
-  total_swap = free_swap = 0;
-  get_swap_stats(&total_swap, &free_swap);
-  return (jlong) free_swap;
-}
-
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    numCpus
- * Signature: ()I
- */
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_numCpus (JNIEnv *env, jobject obj)
 {
   return (jint) num_cpus;
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    cpuFrequency
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuFrequency (JNIEnv *env, jobject obj)
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequencyInHz (JNIEnv *env, jobject obj)
 {
   kstat_ctl_t   *kc;  
   kstat_t       *ksp;  
@@ -220,11 +173,6 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuFrequenc
   }
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    uptimeInSeconds
- * Signature: ()J
- */
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_uptimeInSeconds (JNIEnv *env, jobject obj)
 {
   struct timeval secs;
@@ -252,11 +200,6 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_uptimeInSec
   }
 }
 
-/*
- * Class:     com_jezhumble_javasysmon_SolarisMonitor
- * Method:    currentPid
- * Signature: ()I
- */
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_currentPid (JNIEnv *env, jobject obj)
 {
   return (jint) getpid();
