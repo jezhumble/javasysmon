@@ -43,6 +43,7 @@ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuTimes 
   jmethodID	cpu_times_constructor;
   jobject		cpu_times;
 
+  idleticks = systicks = userticks = 0; 
   kc = kstat_open();
   for (i = 0; i < num_cpus; i++) {
     // the next line is wrong: should replace "cpu_stat0" with "cpu_stati"
@@ -140,7 +141,6 @@ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_swap (JNI
   total_swap = free_swap = 0;
   get_swap_stats(&total_swap, &free_swap);
 
-  free_mem = sysconf(_SC_AVPHYS_PAGES) * pagesize;
   memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
   memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
   memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) free_swap, (jlong) total_swap);
@@ -153,7 +153,7 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_numCpus (JNI
   return (jint) num_cpus;
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequencyInHz (JNIEnv *env, jobject obj)
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_cpuFrequencyInHz (JNIEnv *env, jobject obj)
 {
   kstat_ctl_t   *kc;  
   kstat_t       *ksp;  

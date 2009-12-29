@@ -29,18 +29,9 @@ public class WindowsMonitor implements Monitor {
     public native int currentPid();
     public native long cpuFrequencyInHz();
     public native long uptimeInSeconds();
-
-    public CpuTimes cpuTimes() {
-        return new CpuTimes(0, 0, 0);
-    }
-
-    public MemoryStats physical() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public MemoryStats swap() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public native CpuTimes cpuTimes();
+    public native MemoryStats physical();
+    public native MemoryStats swap();
 
     public ProcessInfo[] processTable() {
         return new ProcessInfo[0];
