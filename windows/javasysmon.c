@@ -54,7 +54,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuTimes (JNIEnv *env, jobject obj)
 {
   ULONGLONG idle, kernel, user;
-  float cpu_usage;
   FILETIME idletime, kerneltime, usertime;
   jclass		cpu_times_class;
   jmethodID	cpu_times_constructor;
@@ -107,7 +106,7 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_numCpus (JNI
   return (jint) num_cpu;
 }
 
-JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuFrequency (JNIEnv *env, jobject object)
+JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuFrequencyInHz (JNIEnv *env, jobject object)
 {
   return (jlong) cpu_frequency;
 }
