@@ -10,7 +10,7 @@ If you’re interested in adding support for a new platform, check out the proje
 Download latest
 ---------------
 
-The current version of JavaSysMon is 0.1.2, released December 23rd. You can get it here: http://github.com/jezhumble/javasysmon/downloads
+The current version of JavaSysMon is 0.2.0, released December 28th. You can get it here: http://github.com/jezhumble/javasysmon/downloads
 
 Run it with java -jar
 
@@ -32,13 +32,12 @@ Simply put the jar in your classpath, and use it like this:
     
     String osName =        monitor.osName();
     long uptimeInSeconds = monitor.uptimeInSeconds();
-    float cpuUsage =	   monitor.cpuUsage();
-    long totalMemory =	   monitor.totalMemory();
-    long freeMemory =	   monitor.freeMemory();
-    long totalSwap = 	   monitor.totalSwap();
-    long freeSwap = 	   monitor.freeSwap();
+    int currentPid =       monitor.currentPid();
+    CpuTimes cpuTimes =	   monitor.cpuTimes();
+    MemoryStats physical = monitor.physical();
+    MemoryStats swap =     monitor.swap();
     int numCpus =          monitor.numCpus();
-    long cpuFrequency =    monitor.cpuFrequency();
+    long cpuFrequency =    monitor.cpuFrequencyInHz();
 
 Current support and limitations
 -------------------------------
