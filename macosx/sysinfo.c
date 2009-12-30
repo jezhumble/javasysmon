@@ -12,12 +12,20 @@
 #include <mach/host_info.h>
 #include <mach/mach_error.h>
 #include <mach/mach_host.h>
+#include <mach/task.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <pwd.h>
 
 static int pageSize = 0;
 static mach_port_t sysmonport;
-static unsigned long long total_memory;
+static unsigned long long total_memory, ticks_per_second;
+typedef struct kinfo_proc kinfo_proc;
 
 int sample_cpu_ticks(host_info_t host_info)
 {
@@ -39,6 +47,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 	int				mib[2];
 	size_t			len;
 	sysmonport = mach_host_self();
+	ticks_per_second = sysconf(_SC_CLK_TCK);
 	
 	mib[0] = CTL_HW;
 	mib[1] = HW_PAGESIZE;
@@ -74,7 +83,10 @@ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuTimes (
 	
 		cpu_times_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/CpuTimes");
 		cpu_times_constructor = (*env)->GetMethodID(env, cpu_times_class, "<init>", "(JJJ)V");
-		cpu_times = (*env)->NewObject(env, cpu_times_class, cpu_times_constructor, (jlong) userticks, (jlong) systicks, (jlong) idleticks);
+		cpu_times = (*env)->NewObject(env, cpu_times_class, cpu_times_constructor,
+									  (jlong) (userticks * 1000) / ticks_per_second,
+									  (jlong) (systicks * 1000) / ticks_per_second,
+									  (jlong) (idleticks * 1000) / ticks_per_second);
 		(*env)->DeleteLocalRef(env, cpu_times_class);
 		return cpu_times;
 	} else {
@@ -134,20 +146,7 @@ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_swap (JNIE
 
 JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_numCpus (JNIEnv *env, jobject object)
 {
-	int					mib[2];
-	size_t				len;
-	int					ncpu;
-	
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
-	len = sizeof(ncpu);
-	
-	if (sysctl(mib, 2, &ncpu, &len, NULL, 0) != 0) {
-		perror("sysctl");
-		return (jint) 0;
-	}
-	
-	return (jint) ncpu;	
+	return (jint) sysconf(_SC_NPROCESSORS_CONF);	
 }
 
 JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequencyInHz (JNIEnv *env, jobject object)
@@ -201,7 +200,106 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_currentPid (J
 	return (jint) getpid();
 }
 
+unsigned long long get_millisecs(struct time_value timeval) {
+	return timeval.seconds * 1000 + timeval.microseconds / 1000;
+}
+
 JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_processTable (JNIEnv *env, jobject object)
 {
+	jclass		process_info_class;
+	jmethodID	process_info_constructor;
+	jobject		process_info;
+	jobjectArray process_info_array;
+	kinfo_proc *        result;
+	struct task_basic_info tasks_info;
+	struct passwd		* passwd;
+	bool                done, is_me;
+	unsigned int		info_count = TASK_BASIC_INFO_COUNT;
+	static const int    name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+	size_t              length;
+	int count, i, err;
+	
+	// Thanks to http://developer.apple.com/mac/library/qa/qa2001/qa1123.html
+	// This sysctl is the only way to do this on OSX without having elevated privileges
+	
+	result = NULL;
+	done = false;
+	do {
+		if (result != NULL) {
+			return NULL;
+		}
+			
+		// Call sysctl with a NULL buffer.
+		
+		length = 0;
+		err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
+					 NULL, &length,
+					 NULL, 0);
+		if (err == -1) {
+			err = errno;
+		}
+		
+		// Allocate an appropriately sized buffer based on the results
+		// from the previous call.
+		
+		if (err == 0) {
+			result = malloc(length);
+			if (result == NULL) {
+				err = ENOMEM;
+			}
+		}
+		
+		// Call sysctl again with the new buffer.  If we get an ENOMEM
+		// error, toss away our buffer and start again.
+		
+		if (err == 0) {
+			err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
+							 result, &length,
+						 NULL, 0);
+			if (err == -1) {
+				err = errno;
+			}
+			if (err == 0) {
+				done = true;
+			} else if (err == ENOMEM) {
+				free(result);
+				result = NULL;
+				err = 0;
+			}
+		}
+	} while (err == 0 && ! done);
+	
+	// This only works for me (since Tiger) unless you have elevated privileges. Lame.
+	//task_info(sysmonport, TASK_BASIC_INFO, (task_info_t) &tasks_info, &info_count);
+	
+	if (err == 0) {
+		count = length / sizeof(kinfo_proc);
+		process_info_array = (*env)->NewObjectArray(env, count, (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
+		process_info_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo");
+		process_info_constructor = (*env)->GetMethodID(env, process_info_class, "<init>",
+													   "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
+		for (i = 0; i < count; i++) {
+			is_me = false; //getpid() == result[i].kp_proc.p_pid;
+			passwd = getpwuid(result[i].kp_eproc.e_pcred.p_ruid);
+			process_info = (*env)->NewObject(env, process_info_class, process_info_constructor,
+											 (jint) result[i].kp_proc.p_pid,
+											 (jint) result[i].kp_eproc.e_ppid,
+											 (*env)->NewStringUTF(env, result[i].kp_proc.p_comm),
+											 (*env)->NewStringUTF(env, result[i].kp_proc.p_comm),
+											 (*env)->NewStringUTF(env, passwd->pw_name),
+											 (jlong) is_me ? get_millisecs(tasks_info.user_time) : 0,
+											 (jlong) is_me ? get_millisecs(tasks_info.system_time) : 0,
+											 (jlong) is_me ? tasks_info.resident_size : 0,
+											 (jlong) is_me ? tasks_info.virtual_size + tasks_info.virtual_size : 0);
+			(*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
+		}
+		(*env)->DeleteLocalRef(env, process_info_class);
+	}
+		
+	if (result != NULL) {
+		free(result);
+		return process_info_array;
+	} 
+	
 	return NULL;
 }

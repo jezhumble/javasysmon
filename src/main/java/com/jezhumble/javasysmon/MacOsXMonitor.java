@@ -29,8 +29,5 @@ public class MacOsXMonitor implements Monitor {
     public native CpuTimes cpuTimes();
     public native MemoryStats physical();
     public native MemoryStats swap();
-
-    public ProcessInfo[] processTable() {
-        return new ProcessInfo[0];
-    }
+    public native ProcessInfo[] processTable();
 }
