@@ -200,8 +200,8 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_currentPid (J
 	return (jint) getpid();
 }
 
-unsigned long long get_millisecs(struct time_value timeval) {
-	return timeval.seconds * 1000 + timeval.microseconds / 1000;
+unsigned long long get_millisecs(struct timeval timeval) {
+	return timeval.tv_sec * 1000 + timeval.tv_usec / 1000;
 }
 
 JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_processTable (JNIEnv *env, jobject object)
@@ -212,6 +212,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_proce
 	jobjectArray process_info_array;
 	kinfo_proc *        result;
 	struct task_basic_info tasks_info;
+	struct rusage		rusage;
 	struct passwd		* passwd;
 	bool                done, is_me;
 	unsigned int		info_count = TASK_BASIC_INFO_COUNT;
@@ -270,7 +271,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_proce
 	} while (err == 0 && ! done);
 	
 	// This only works for me (since Tiger) unless you have elevated privileges. Lame.
-	//task_info(sysmonport, TASK_BASIC_INFO, (task_info_t) &tasks_info, &info_count);
+	task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t) &tasks_info, &info_count);	
+	getrusage(RUSAGE_SELF, &rusage);
 	
 	if (err == 0) {
 		count = length / sizeof(kinfo_proc);
@@ -279,18 +281,18 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_proce
 		process_info_constructor = (*env)->GetMethodID(env, process_info_class, "<init>",
 													   "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
 		for (i = 0; i < count; i++) {
-			is_me = false; //getpid() == result[i].kp_proc.p_pid;
+			is_me = getpid() == result[i].kp_proc.p_pid;
 			passwd = getpwuid(result[i].kp_eproc.e_pcred.p_ruid);
 			process_info = (*env)->NewObject(env, process_info_class, process_info_constructor,
 											 (jint) result[i].kp_proc.p_pid,
 											 (jint) result[i].kp_eproc.e_ppid,
-											 (*env)->NewStringUTF(env, result[i].kp_proc.p_comm),
+											 (*env)->NewStringUTF(env, ""),
 											 (*env)->NewStringUTF(env, result[i].kp_proc.p_comm),
 											 (*env)->NewStringUTF(env, passwd->pw_name),
-											 (jlong) is_me ? get_millisecs(tasks_info.user_time) : 0,
-											 (jlong) is_me ? get_millisecs(tasks_info.system_time) : 0,
+											 (jlong) is_me ? get_millisecs(rusage.ru_utime) : 0,
+											 (jlong) is_me ? get_millisecs(rusage.ru_stime) : 0,
 											 (jlong) is_me ? tasks_info.resident_size : 0,
-											 (jlong) is_me ? tasks_info.virtual_size + tasks_info.virtual_size : 0);
+											 (jlong) is_me ? tasks_info.virtual_size : 0);
 			(*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
 		}
 		(*env)->DeleteLocalRef(env, process_info_class);
