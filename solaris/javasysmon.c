@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <jni.h>
+#include <dirent.h>
+#include <limits.h>
 
 #define MAXSTRSIZE 80
 
@@ -205,4 +207,52 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_currentPid (
   return (jint) getpid();
 }
 
+JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_processTable (JNIEnv *env, jobject object)
+{
+  jclass	process_info_class;
+  jmethodID	process_info_constructor;
+  jobject	process_info;
+  jobjectArray  process_info_array;
+  DIR           *dir;
+  struct dirent *dp;
+  char          pname[PATH_MAX];
+  int           procfd;
+  psinfo_t      info;
 
+  process_info_array = (*env)->NewObjectArray(env, count, (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
+  process_info_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo");
+  process_info_constructor = (*env)->GetMethodID(env, process_info_class, "<init>",
+						 "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
+
+  *dir = opendir("/proc");
+  while ((dp = readdir(dir))) {
+    if (dp->d_name[0] == '.')
+      continue;
+    snprintf(pname, sizeof(pname), "/proc/%s/psinfo", dp->d_name);
+  again:
+    if ((procfd = open(pname, O_RDONLY)) == -1)
+      continue; // process has exited
+    if (read(procfd, (char *)&info, sizeof (info)) < 0) {
+      int saverr = errno;
+      (void) close(procfd);
+      if (saverr == EAGAIN)
+	goto again;
+      if (saverr != ENOENT)
+	continue;
+      process_info = (*env)->NewObject(env, process_info_class, process_info_constructor,
+				       (jint) info.pr_pid,
+				       (jint) info.pr_ppid,
+				       (*env)->NewStringUTF(env, info.pr_fname),
+				       (*env)->NewStringUTF(env, ""),
+				       (*env)->NewStringUTF(env, ""),
+				       (jlong) 0, (jlong) 0,
+				       (jlong) info.pr_rssize * 1024,
+				       (jlong) info.pr_size * 1024);
+      (*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
+    }
+
+  }
+
+  (*env)->DeleteLocalRef(env, process_info_class);
+  return process_info_array;
+}
