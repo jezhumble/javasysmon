@@ -133,14 +133,13 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	jobjectArray    process_info_array;
 	DWORD           processes[1024], buffer_size, count, working_set_size, pagefile_usage;
 	unsigned int    i, ppid;
-        TCHAR           process_name[MAX_PATH] = TEXT("<unknown>");
-        TCHAR           process_command[MAX_PATH] = TEXT("<unknown>");
+    TCHAR           process_name[MAX_PATH] = TEXT("<unknown>");
+    TCHAR           process_command[MAX_PATH] = TEXT("<unknown>");
 	HANDLE          process;
 	HANDLE          snapshot;
 	HMODULE         module;
 	PROCESS_MEMORY_COUNTERS pmc;
-        PROCESSENTRY32  process_entry;
-	PERFORMANCE_INFORMATION performance;
+	PROCESSENTRY32  process_entry;
 	
 	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	process_entry.dwSize = sizeof(PROCESSENTRY32);
@@ -150,9 +149,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	process_info_array = (*env)->NewObjectArray(env, count, (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
 
 	for (i = 0; i <count; i++) {
-	  working_set_size = pagefile_size = ppid = 0;
-	  process_name = TEXT("<unknown>");
-	  process_command = TEXT("<unknown>");
+	  working_set_size = pagefile_usage = ppid = 0;
+//	  &process_name = TEXT("<unknown>");
+//	  &process_command = TEXT("<unknown>");
 	  // You can't get ppid from the usual PSAPI calls, so you need to use the ToolHelp stuff
 	  // Thanks to http://www.codeproject.com/KB/threads/ParentPID.aspx?msg=1637993 for the tip
 	  if (Process32First(snapshot, &process_entry)) {
@@ -166,7 +165,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	  // if we can open the process (doesn't work for system idle process and CSRSS without elevated privileges)
           if (processes[i] != 0 && (process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i])) != NULL) {
 	    // get process name
-	    if (EnumProcessModules(process, &module, process_name, sizeof(module), &buffer_size)) {
+	    if (EnumProcessModules(process, &module, sizeof(module), &buffer_size)) {
 	      GetModuleBaseName(process, module, process_name, sizeof(process_name) / sizeof(TCHAR));
 	    }
 	    // get command name
