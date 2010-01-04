@@ -64,6 +64,14 @@
    JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_swap
      (JNIEnv *, jobject);
 
+  /*
+   * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+   * Method:    processTable
+   * Signature: ()[Lcom/jezhumble/javasysmon/ProcessInfo;
+   */	
+   JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_processTable
+     (JNIEnv *, jobject);
+
   #ifdef __cplusplus
   }
   #endif
