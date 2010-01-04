@@ -19,14 +19,14 @@ static int num_cpu;
 static DWORD current_pid;
 static ULONGLONG cpu_frequency;
 
-static ULONGLONG filetime_to_int64 (FILETIME* filetime)
+static ULONGLONG filetime_to_millis (FILETIME* filetime)
 {
     ULARGE_INTEGER time;
 
     time.LowPart = filetime->dwLowDateTime;
     time.HighPart = filetime->dwHighDateTime;
 
-    return time.QuadPart;
+    return time.QuadPart / 10000;
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
@@ -63,9 +63,9 @@ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuTimes 
   jobject		cpu_times;
 
   GetSystemTimes(&idletime, &kerneltime, &usertime);
-  idle = filetime_to_int64(&idletime);
-  kernel = filetime_to_int64(&kerneltime) - idle;
-  user = filetime_to_int64(&usertime);
+  idle = filetime_to_millis(&idletime);
+  kernel = filetime_to_millis(&kerneltime) - idle;
+  user = filetime_to_millis(&usertime);
 
   cpu_times_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/CpuTimes");
   cpu_times_constructor = (*env)->GetMethodID(env, cpu_times_class, "<init>", "(JJJ)V");
@@ -135,8 +135,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	unsigned int    i, ppid;
     TCHAR           process_name[MAX_PATH] = TEXT("<unknown>");
     TCHAR           process_command[MAX_PATH] = TEXT("<unknown>");
-	HANDLE          process;
-	HANDLE          snapshot;
+    TCHAR           security_identifier[MAX_PATH] = TEXT("<unknown>");
+    FILETIME        created, exit, kernel, user;
+    HANDLE          process, snapshot, token;
+    TOKEN_USER      user_token;
 	HMODULE         module;
 	PROCESS_MEMORY_COUNTERS pmc;
 	PROCESSENTRY32  process_entry;
@@ -170,6 +172,14 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	    }
 	    // get command name
 	    GetProcessImageFileName(process, process_command, sizeof(process_command) / sizeof(TCHAR));
+	    // get CPU usage
+	    GetProcessTimes(process, &created, &exit, &kernel, &user);
+	    // get owner (thanks to http://www.codeproject.com/KB/cs/processownersid.aspx)
+	    if (OpenProcessToken(process, TOKEN_QUERY, &token)) {
+	      GetTokenInformation(token, TOKEN_USER, &user_token, sizeof(user_token), &buffer_size);
+	      ConvertSidToStringSid(user_token.User.Sid, security_identifier);
+	      CloseHandle(token);
+	    }
 	    // get memory usage
 	    if (GetProcessMemoryInfo(process, &pmc, sizeof(pmc))) {
 	      working_set_size = pmc.WorkingSetSize;
@@ -184,9 +194,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 					   (jint) ppid, // parent id
 					   (*env)->NewStringUTF(env, process_command), // command
 					   (*env)->NewStringUTF(env, process_name), // name
-					   (*env)->NewStringUTF(env, ""), // owner
-					   (jlong) 0, // user millis
-					   (jlong) 0, // system millis
+					   (*env)->NewStringUTF(env, security_identifier), // owner
+					   (jlong) filetime_to_millis(&user), // user millis
+					   (jlong) filetime_to_millis(&kernel), // system millis
 					   (jlong) working_set_size, // resident bytes
 					   (jlong) working_set_size + pagefile_usage); // total bytes 
 	  (*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
