@@ -13,6 +13,7 @@
 #include <tchar.h>
 #include <psapi.h>
 #include <tlhelp32.h>
+#include <Sddl.h>
 
 static SYSTEM_INFO system_info;
 static int num_cpu;
@@ -131,27 +132,32 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	jmethodID	process_info_constructor;
 	jobject		process_info;
 	jobjectArray    process_info_array;
-	DWORD           processes[1024], buffer_size, count, working_set_size, pagefile_usage;
+	DWORD           processes[1024], buffer_size, count;
+	SIZE_T			working_set_size, pagefile_usage;
 	unsigned int    i, ppid;
     TCHAR           process_name[MAX_PATH] = TEXT("<unknown>");
     TCHAR           process_command[MAX_PATH] = TEXT("<unknown>");
-    TCHAR           security_identifier[MAX_PATH] = TEXT("<unknown>");
+    TCHAR			user_name[MAX_PATH] = TEXT("<unknown>");
+    TCHAR			domain_name[MAX_PATH] = TEXT("<unknown>");
     FILETIME        created, exit, kernel, user;
     HANDLE          process, snapshot, token;
-    TOKEN_USER      user_token;
+    PTOKEN_USER     user_token;
 	HMODULE         module;
 	PROCESS_MEMORY_COUNTERS pmc;
 	PROCESSENTRY32  process_entry;
+	SID_NAME_USE	sid_name_use;
 	
 	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	process_entry.dwSize = sizeof(PROCESSENTRY32);
 	if (!EnumProcesses(processes, sizeof(processes), &buffer_size))
 	  return NULL;
         count = buffer_size / sizeof(DWORD);
-	process_info_array = (*env)->NewObjectArray(env, count, (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
+	process_info_array = (*env)->NewObjectArray(env, count,
+		(*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
 
 	for (i = 0; i <count; i++) {
 	  working_set_size = pagefile_usage = ppid = 0;
+	  user_token = NULL;
 //	  &process_name = TEXT("<unknown>");
 //	  &process_command = TEXT("<unknown>");
 	  // You can't get ppid from the usual PSAPI calls, so you need to use the ToolHelp stuff
@@ -176,10 +182,28 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	    GetProcessTimes(process, &created, &exit, &kernel, &user);
 	    // get owner (thanks to http://www.codeproject.com/KB/cs/processownersid.aspx)
 	    if (OpenProcessToken(process, TOKEN_QUERY, &token)) {
-	      GetTokenInformation(token, TOKEN_USER, &user_token, sizeof(user_token), &buffer_size);
-	      ConvertSidToStringSid(user_token.User.Sid, security_identifier);
+			GetTokenInformation(token, TokenUser, (LPVOID) user_token, 0, &buffer_size);
+			if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+				goto cleanup;
+			}
+		  user_token = (PTOKEN_USER) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer_size);
+		  if (user_token == NULL) {
+			  goto cleanup;
+		  }
+		  if (!GetTokenInformation(token, TokenUser, (LPVOID) user_token, buffer_size, &buffer_size)) {
+			  goto cleanup;
+		  }
+		  if (!LookupAccountSid(NULL, user_token->User.Sid, user_name, &buffer_size, domain_name, &buffer_size, &sid_name_use)) {
+			  goto cleanup;
+		  }
+		  strcat(domain_name, "\\");
+		  strcat(domain_name, user_name);
+cleanup:
 	      CloseHandle(token);
-	    }
+		  if (user_token != NULL) {
+			  HeapFree(GetProcessHeap(), 0, (LPVOID) user_token);
+		  }
+		}
 	    // get memory usage
 	    if (GetProcessMemoryInfo(process, &pmc, sizeof(pmc))) {
 	      working_set_size = pmc.WorkingSetSize;
@@ -194,7 +218,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 					   (jint) ppid, // parent id
 					   (*env)->NewStringUTF(env, process_command), // command
 					   (*env)->NewStringUTF(env, process_name), // name
-					   (*env)->NewStringUTF(env, security_identifier), // owner
+					   (*env)->NewStringUTF(env, user_token == NULL ? "<unknown>" : domain_name), // owner
 					   (jlong) filetime_to_millis(&user), // user millis
 					   (jlong) filetime_to_millis(&kernel), // system millis
 					   (jlong) working_set_size, // resident bytes
@@ -202,7 +226,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	  (*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
 	  (*env)->DeleteLocalRef(env, process_info_class);
 	}
-	CloseHandle(snapshot);
+	  CloseHandle(snapshot);
 	return process_info_array;
 }
 
