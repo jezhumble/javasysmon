@@ -6,9 +6,9 @@ public class WindowsMonitor implements Monitor {
     static {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
 		if (System.getProperty("os.arch").indexOf("64") > -1) {
-	            System.loadLibrary("javasysmon64");
+	            new NativeLibraryLoader().loadLibrary("javasysmon64.dll");
 		} else {
-	            System.loadLibrary("javasysmon");
+	            new NativeLibraryLoader().loadLibrary("javasysmon.dll");
 		}
             monitor = new WindowsMonitor();
         }

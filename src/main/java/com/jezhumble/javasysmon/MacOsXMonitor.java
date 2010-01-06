@@ -6,7 +6,7 @@ public class MacOsXMonitor implements Monitor {
 
     static {
         if (System.getProperty("os.name").toLowerCase().equals("mac os x")) {
-            System.loadLibrary("javasysmon");
+            new NativeLibraryLoader().loadLibrary("libjavasysmon.jnilib");
             monitor = new MacOsXMonitor();
         }
     }

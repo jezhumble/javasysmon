@@ -35,14 +35,13 @@
   </target>
 
   <target name="package" depends="init, compile">
-    <one-jar destfile="target/javasysmon.jar" manifest="src/main/resources/MANIFEST.MF">
-      <main>
-        <fileset dir="target/classes"/>
-      </main>
-      <binlib>
-        <fileset dir="lib/native" />
-      </binlib>
-    </one-jar> 
+    <jar destfile="target/javasysmon.jar" manifest="src/main/resources/MANIFEST.MF">
+      <fileset dir="target/classes"/>
+      <fileset dir="lib/native" />
+      <manifest>
+	<attribute name="Main-Class" value="com.jezhumble.javasysmon.JavaSysMon"/>
+      </manifest>
+    </jar> 
   </target>
 
   <target name="test" depends="compile, compile-tests">
