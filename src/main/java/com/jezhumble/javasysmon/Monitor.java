@@ -10,4 +10,5 @@ public interface Monitor {
     public long uptimeInSeconds();
     public int currentPid();
     ProcessInfo[] processTable();
+    public void killProcess(int pid);
 }

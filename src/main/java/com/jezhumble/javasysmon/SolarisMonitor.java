@@ -34,4 +34,7 @@ public class SolarisMonitor implements Monitor {
     public ProcessInfo[] processTable() {
         return new ProcessInfo[0];
     }
+
+    public void killProcess(int pid) {
+    }
 }

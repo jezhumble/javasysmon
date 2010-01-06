@@ -30,4 +30,7 @@ public class MacOsXMonitor implements Monitor {
     public native MemoryStats physical();
     public native MemoryStats swap();
     public native ProcessInfo[] processTable();
+
+    public void killProcess(int pid) {
+    }
 }

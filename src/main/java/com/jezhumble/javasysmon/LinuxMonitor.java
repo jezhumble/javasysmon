@@ -2,6 +2,7 @@ package com.jezhumble.javasysmon;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,11 +42,11 @@ public class LinuxMonitor implements Monitor {
         if (System.getProperty("os.name").toLowerCase().startsWith("linux")) {
             JavaSysMon.setMonitor(this);
             JavaSysMon.addSupportedConfig("Linux (only tested with x86)");
-//  In theory, this calculation should return userHz. It doesn't seem to work though.
-//            long uptimeInSeconds = uptimeInSeconds();
-//            previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
-//            long uptimeInJiffies = getTotalJiffies(previousJiffies.split("\\s+"));
-//            userHz = (int) (uptimeInJiffies / uptimeInSeconds);
+//          In theory, this calculation should return userHz. It doesn't seem to work though.
+//          long uptimeInSeconds = uptimeInSeconds();
+//          previousJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat");
+//          long uptimeInJiffies = getTotalJiffies(previousJiffies.split("\\s+"));
+//          userHz = (int) (uptimeInJiffies / uptimeInSeconds);
         }
     }
 
@@ -121,18 +122,6 @@ public class LinuxMonitor implements Monitor {
         }
     }
 
-    private long getMultiplier(char multiplier) {
-        switch (multiplier) {
-            case 'G':
-                return 1000000000;
-            case 'M':
-                return 1000000;
-            case 'k':
-                return 1000;
-        }
-        return 0;
-    }
-
     public CpuTimes cpuTimes() {
         String[] parsedJiffies = fileUtils.runRegexOnFile(CPU_JIFFIES_PATTERN, "/proc/stat").split("\\s+");
         long userJiffies = Long.parseLong(parsedJiffies[0]) + Long.parseLong(parsedJiffies[1]);
@@ -147,8 +136,46 @@ public class LinuxMonitor implements Monitor {
         return new CpuTimes(toMillis(userJiffies), toMillis(systemJiffies), toMillis(idleJiffies));
     }
 
+    public void killProcess(int pid) {
+        try {
+            ProcessKiller.DESTROY_PROCESS.invoke(null, new Object[] { new Integer(pid) });
+        } catch (Exception e) {
+            throw new RuntimeException("Could not kill process id " + pid, e);
+        }
+    }
+
+    private long getMultiplier(char multiplier) {
+        switch (multiplier) {
+            case 'G':
+                return 1000000000;
+            case 'M':
+                return 1000000;
+            case 'k':
+                return 1000;
+        }
+        return 0;
+    }
+
     private long toMillis(long jiffies) {
         int multiplier = 1000 / userHz;
         return jiffies * multiplier;
+    }
+
+    // Stole this from Hudson (hudson.util.ProcessTree). It's a hack because it's an undocumented API in the JVM.
+    // However I can't think of any better way to do this without writing native code for Linux which I want to avoid.
+    // Wouldn't it be nice if deleting a directory in the proc filesystem killed the process?
+    private static final class ProcessKiller {
+        private static Method DESTROY_PROCESS = null;
+
+        static {
+            try {
+                Class clazz = Class.forName("java.lang.UNIXProcess");
+                DESTROY_PROCESS = clazz.getDeclaredMethod("destroyProcess", new Class[] { int.class });
+                DESTROY_PROCESS.setAccessible(true);
+            } catch (Exception e) {
+                LinkageError x = new LinkageError("Couldn't get method java.lang.UNIXProcess.destroyProcess(int)");
+                x.initCause(e);
+            }
+        }
     }
 }

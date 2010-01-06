@@ -8,11 +8,11 @@ public class JavaSysMon implements Monitor {
     private static Monitor monitor = null;
     private static ArrayList supported = new ArrayList();
 
-    public static void setMonitor(Monitor myMonitor) {
+    static void setMonitor(Monitor myMonitor) {
         monitor = myMonitor;
     }
 
-    public static void addSupportedConfig(String config) {
+    static void addSupportedConfig(String config) {
         supported.add(config);
     }
 
@@ -32,6 +32,10 @@ public class JavaSysMon implements Monitor {
                 System.err.println(config);
             }
         } else {
+            if (params.length == 1) {
+                System.out.println("Attempting to kill process id " + params[0]);
+                monitor.killProcess(Integer.parseInt(params[0]));
+            }
             CpuTimes initialTimes = monitor.cpuTimes();
             System.out.println("OS name: " + monitor.osName() +
                     "  Uptime: " + secsInDaysAndHours(monitor.uptimeInSeconds()) +
@@ -56,7 +60,7 @@ public class JavaSysMon implements Monitor {
         return days + " days " + hours + " hours";
     }
 
-    // Following are the actual stats you can get
+    // Following is the actual API
 
     public String osName() {
         return monitor.osName();
@@ -92,5 +96,9 @@ public class JavaSysMon implements Monitor {
 
     public ProcessInfo[] processTable() {
         return monitor.processTable();
+    }
+
+    public void killProcess(int pid) {
+        monitor.killProcess(pid);
     }
 }
