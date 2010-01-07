@@ -8,15 +8,27 @@ public class FileUtils {
 
     private static final Pattern PROC_DIR_PATTERN = Pattern.compile("([\\d]*)");
 
-    public final static FilenameFilter PROCESS_DIRECTORY_FILTER = new FilenameFilter() {
+    private final static FilenameFilter PROCESS_DIRECTORY_FILTER = new FilenameFilter() {
         public boolean accept(File dir, String name) {
             File fileToTest = new File(dir, name);
             return fileToTest.isDirectory() && PROC_DIR_PATTERN.matcher(name).matches();
         }
     };
 
+    public String[] pidsFromProcFilesystem() {
+        return new File("/proc").list(FileUtils.PROCESS_DIRECTORY_FILTER);
+    }
+
     public String slurp(String fileName) throws IOException {
         return slurpFromInputStream(new FileInputStream(fileName));
+    }
+
+    public byte[] slurpToByteArray(String fileName) throws IOException {
+        File fileToRead = new File(fileName);
+        byte[] contents = new byte[(int) fileToRead.length()];
+        final InputStream inputStream = new FileInputStream(fileToRead);
+        inputStream.read(contents);
+        return contents;
     }
 
     public String slurpFromInputStream(InputStream stream) throws IOException {

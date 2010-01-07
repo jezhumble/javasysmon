@@ -105,7 +105,7 @@ public class LinuxMonitor implements Monitor {
 
     public ProcessInfo[] processTable() {
         try {
-            final String[] pids = new File("/proc").list(FileUtils.PROCESS_DIRECTORY_FILTER);
+            final String[] pids = fileUtils.pidsFromProcFilesystem();
             ProcessInfo[] processTable = new ProcessInfo[pids.length];
             for (int i = 0; i < pids.length; i++) {
                 String stat = fileUtils.slurp("/proc/" + pids[i] + "/stat");
