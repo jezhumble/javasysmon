@@ -35,6 +35,5 @@ public class SolarisMonitor implements Monitor {
         return new ProcessInfo[0];
     }
 
-    public void killProcess(int pid) {
-    }
+    public native void killProcess(int pid);
 }

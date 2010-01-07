@@ -230,3 +230,11 @@ cleanup:
 	return process_info_array;
 }
 
+JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_killProcess (JNIEnv *env, jobject object, jint pid) {
+  HANDLE process;
+
+  process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+  if (process != NULL) {
+    TerminateProcess(process, 1);
+  }
+}

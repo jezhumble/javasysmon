@@ -33,7 +33,5 @@ public class WindowsMonitor implements Monitor {
     public native MemoryStats physical();
     public native MemoryStats swap();
     public native ProcessInfo[] processTable();
-
-    public void killProcess(int pid) {
-    }
+    public native void killProcess(int pid);
 }

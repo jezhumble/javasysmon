@@ -65,12 +65,20 @@
      (JNIEnv *, jobject);
 
   /*
-   * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+   * Class:     com_jezhumble_javasysmon_WindowsMonitor
    * Method:    processTable
    * Signature: ()[Lcom/jezhumble/javasysmon/ProcessInfo;
    */	
    JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_processTable
      (JNIEnv *, jobject);
+
+  /*
+   * Class:     com_jezhumble_javasysmon_WindowsMonitor
+   * Method:    killProcess
+   * Signature: (I)V
+   */
+   JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_WindowMonitor_killProcess
+     (JNIEnv *, jobject, jint);
 
   #ifdef __cplusplus
   }

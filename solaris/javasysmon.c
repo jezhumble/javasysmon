@@ -18,6 +18,7 @@
 #include <jni.h>
 #include <dirent.h>
 #include <limits.h>
+#include <signal.h>
 
 #define MAXSTRSIZE 80
 
@@ -255,4 +256,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_proce
 
   (*env)->DeleteLocalRef(env, process_info_class);
   return process_info_array;
+}
+
+JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_killProcess (JNIEnv *env, jobject object, jint pid) {
+  kill(pid, SIGTERM);
 }
