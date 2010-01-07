@@ -71,7 +71,16 @@ JNIEXPORT jlong JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_cpuFrequency
  */	
  JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_processTable
    (JNIEnv *, jobject);
-
+	
+/*
+ * Class:     com_jezhumble_javasysmon_MacOsXMonitor
+ * Method:    killProcess
+ * Signature: (I)V
+ */
+ JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_killProcess
+   (JNIEnv *, jobject, jint);
+	
+	
 #ifdef __cplusplus
 }
 #endif

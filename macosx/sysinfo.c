@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <pwd.h>
+#include <signal.h>
 
 static int pageSize = 0;
 static mach_port_t sysmonport;
@@ -304,4 +305,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_proce
 	} 
 	
 	return NULL;
+}
+
+JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_killProcess (JNIEnv *env, jobject object, jint pid) {
+	kill(pid, SIGTERM);
 }
