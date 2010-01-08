@@ -157,11 +157,12 @@ public class JavaSysMon implements Monitor {
     }
 
     /**
-     * Gets the total amount of time the CPU has spent in
-     * user mode, kernel mode, and idle. Can be used to
-     * calculate CPU usage. Simply take two data points,
-     * take the difference between these numbers, and
-     * calculate the percentage of time spent not idle.
+     * Gets a snapshot which contains the total amount
+     * of time the CPU has spent in user mode, kernel mode,
+     * and idle. Given two snapshots, you can calculate
+     * the CPU usage during that time. There is a convenience
+     * method to perform this calculation in
+     * {@link CpuTimes#getCpuUsage}
      *
      * @return An object containing the amount of time the
      * CPU has spent idle, in user mode and in kernel mode,
@@ -236,7 +237,7 @@ public class JavaSysMon implements Monitor {
     }
 
     /**
-     * Attempts to kill all the descendents of the currently running process.
+     * Attempts to kill all the descendants of the currently running process.
      */
     public void infanticide() {
         killProcessTree(currentPid(), true);
