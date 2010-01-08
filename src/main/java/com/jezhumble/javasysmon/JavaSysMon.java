@@ -232,8 +232,34 @@ public class JavaSysMon implements Monitor {
         monitor.killProcess(pid);
     }
 
-    public void killProcessTree(int pid, boolean descendantsOnly) {
-        processTree().find(pid).killTree(descendantsOnly);        
+    /**
+     * Allows you to visit the process tree, starting at the node identified by pid.
+     * The process tree is traversed depth-first.
+     * 
+     * @param pid The identifier of the node to start visiting
+     * @param processVisitor The visitor
+     */
+    public void visitProcessTree(final int pid, final ProcessVisitor processVisitor) {
+        processTree().find(pid).accept(processVisitor, 0);
+    }
+
+    /**
+     * Kills the process tree starting at the process identified by pid. The
+     * process tree is killed from the bottom up to ensure that orphans are
+     * not generated.
+     * <p>
+     * This method uses {@link #visitProcessTree}.
+     * 
+     * @param pid The identifier of the process at which to start killing the tree.
+     * @param descendantsOnly Whether or not to kill the process you start at,
+     * or only its descendants
+     */
+    public void killProcessTree(final int pid, final boolean descendantsOnly) {
+        visitProcessTree(pid, new ProcessVisitor() {
+            public boolean visit(OsProcess process, int level) {
+                return !descendantsOnly || (pid != process.processInfo().getPid());
+            }
+        });
     }
 
     /**

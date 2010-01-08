@@ -83,11 +83,18 @@ public class OsProcess {
         return null;
     }
 
-    public void killTree(boolean descendantsOnly) {
+    /**
+     * Method to allow visiting the process tree. Use the convenience method
+     * {@link JavaSysMon#visitProcessTree}
+     *
+     * @param processVisitor An instance of {@link ProcessVisitor}
+     * @param level The level currently being visited
+     */
+    public void accept(ProcessVisitor processVisitor, int level) {
         for (Iterator it = children.iterator(); it.hasNext(); ) {
-            ((OsProcess) it.next()).killTree(false);
+            ((OsProcess) it.next()).accept(processVisitor, level + 1);
         }
-        if (!descendantsOnly) {
+        if (processVisitor.visit(this, level)) {
             new JavaSysMon().killProcess(processInfo.getPid());
         }
     }
