@@ -20,6 +20,16 @@
         <jarDirectory url="file://$MODULE_DIR$/lib/java" recursive="false" />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/lib/native" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/lib/native" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

@@ -53,4 +53,10 @@
       </batchtest>
     </junit>
   </target>
+
+  <target name="sleep">
+    <exec executable="sleep">
+      <arg value="50"/>
+    </exec>
+  </target>
 </project>

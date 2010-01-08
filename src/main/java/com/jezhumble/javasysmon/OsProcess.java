@@ -56,7 +56,7 @@ public class OsProcess {
 
     public void killTree(boolean descendantsOnly) {
         for (Iterator it = children.iterator(); it.hasNext(); ) {
-            ((OsProcess) it.next()).killTree(true);
+            ((OsProcess) it.next()).killTree(false);
         }
         if (!descendantsOnly) {
             new JavaSysMon().killProcess(processInfo.getPid());
