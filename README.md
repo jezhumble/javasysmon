@@ -1,7 +1,7 @@
 JavaSysMon
 ==========
 
-JavaSysMon is designed to provide an OS-independent way to get live system information such as CPU and memory usage, distributed as a single jar file. It is written in C and Java. However the native binaries are hidden away inside the jar (thanks to [one-jar](http://one-jar.sourceforge.net/)), so you never need to worry about them.
+JavaSysMon is designed to provide an OS-independent way to manage OS processes and get live system performance information such as CPU and memory usage, distributed as a single jar file. It is written in C and Java. However the native binaries are hidden away inside the jar, so you never need to worry about them.
 
 Currently it supports Mac OS X, Linux, Windows, and Solaris. Ultimately we aim to support everything from AIX to Android.
 
@@ -29,21 +29,16 @@ Simply put the jar in your classpath, and use it like this:
     import com.jezhumble.javasysmon.JavaSysMon;
        
     JavaSysMon monitor =   new JavaSysMon();
-    
     String osName =        monitor.osName();
-    long uptimeInSeconds = monitor.uptimeInSeconds();
-    int currentPid =       monitor.currentPid();
-    CpuTimes cpuTimes =	   monitor.cpuTimes();
-    MemoryStats physical = monitor.physical();
-    MemoryStats swap =     monitor.swap();
-    int numCpus =          monitor.numCpus();
-    long cpuFrequency =    monitor.cpuFrequencyInHz();
+    etc...
+
+For full details of the API, consult the [JavaDoc](http://jezhumble.github.com/javasysmon/)
 
 Current support and limitations
 -------------------------------
 
 * Currently supports Mac OS X, Linux, Windows, and Solaris
-* Solaris binary is compiled on x86 on OpenSolaris, so it won't work on SPARC, and may not work on SunOS < 5.11
+* Solaris binary is compiled on x86 on OpenSolaris, so it won't work on SPARC, and has not been tested on SunOS < 5.11
 * Solaris CPU usage only correctly reports usage for first CPU.
 * Supports Java 1.4 and above
 * CPU speed on Linux only reports correct values for Intel CPUs
@@ -56,7 +51,8 @@ JavaSysMon uses the NetBSD (2-line) license.
 Links
 -----
 
-* Code: http://github.com/jezhumble/javasysmon
-* JavaDoc: http://jezhumble.github.com/javasysmon/
-* Bugs/Features: http://github.com/arya/javasysmon/issues
-* Mailing List: http://groups.google.com/group/javasysmon
+* [Source code](http://github.com/jezhumble/javasysmon)
+* [Wiki](http://wiki.github.com/jezhumble/javasysmon)
+* [JavaDoc](http://jezhumble.github.com/javasysmon/)
+* [Bugs/Features](http://github.com/arya/javasysmon/issues)
+* [Mailing List](http://groups.google.com/group/javasysmon)
