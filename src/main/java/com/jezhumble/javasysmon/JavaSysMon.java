@@ -101,7 +101,19 @@ public class JavaSysMon implements Monitor {
         return monitor.processTable();
     }
 
+    public OsProcess processTree() {
+        return OsProcess.createTree(monitor.processTable());
+    }
+
     public void killProcess(int pid) {
         monitor.killProcess(pid);
+    }
+
+    public void killProcessTree(int pid, boolean descendantsOnly) {
+        processTree().find(pid).killTree(descendantsOnly);        
+    }
+
+    public void infanticide() {
+        killProcessTree(currentPid(), true);
     }
 }
