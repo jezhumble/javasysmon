@@ -1,4 +1,0 @@
-Build-By: Jez Humble
-Implementation-Title: javasysmon
-One-Jar-Main-Class: com.jezhumble.javasysmon.JavaSysMon
-

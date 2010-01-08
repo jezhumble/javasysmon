@@ -1,7 +1,5 @@
 <project name="javasysmon" basedir="." default="package">
 
-  <import file="lib/java/one-jar-ant-task.xml"/>   
-
   <path id="test.classpath">
     <pathelement path="target/classes"/>
     <pathelement path="target/test-classes"/>
@@ -35,7 +33,7 @@
   </target>
 
   <target name="package" depends="init, compile">
-    <jar destfile="target/javasysmon.jar" manifest="src/main/resources/MANIFEST.MF">
+    <jar destfile="target/javasysmon.jar">
       <fileset dir="target/classes"/>
       <fileset dir="lib/native" />
       <manifest>
