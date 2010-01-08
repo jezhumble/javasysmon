@@ -9,7 +9,9 @@ public class JavaSysMon implements Monitor {
     private static ArrayList supported = new ArrayList();
 
     static void setMonitor(Monitor myMonitor) {
-        monitor = myMonitor;
+        if (monitor == null) {
+            monitor = myMonitor;
+        }
     }
 
     static void addSupportedConfig(String config) {
@@ -21,10 +23,11 @@ public class JavaSysMon implements Monitor {
         new LinuxMonitor();
         new WindowsMonitor();
         new SolarisMonitor();
+        new NullMonitor(); // make sure the API never gives back a NPE
     }
 
     public static void main (String[] params) throws Exception {
-        if (monitor == null) {
+        if (monitor instanceof NullMonitor) {
             System.err.println("Couldn't find an implementation for OS: " + System.getProperty("os.name"));
             System.err.println("Supported configurations:");
             for (Iterator iter = supported.iterator(); iter.hasNext(); ) {

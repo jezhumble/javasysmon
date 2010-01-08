@@ -275,6 +275,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_proce
 	task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t) &tasks_info, &info_count);	
 	getrusage(RUSAGE_SELF, &rusage);
 	
+	// if anybody wants to get the actual command that started the process, check out:
+	// http://cpansearch.perl.org/src/DURIST/Proc-ProcessTable-0.42/os/darwin.c
+
 	if (err == 0) {
 		count = length / sizeof(kinfo_proc);
 		process_info_array = (*env)->NewObjectArray(env, count, (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
