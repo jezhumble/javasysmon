@@ -2,7 +2,7 @@ package com.jezhumble.javasysmon;
 
 import java.io.IOException;
 
-public class SolarisMonitor implements Monitor {
+class SolarisMonitor implements Monitor {
     private static Monitor monitor = null;
     private final FileUtils fileUtils;
 

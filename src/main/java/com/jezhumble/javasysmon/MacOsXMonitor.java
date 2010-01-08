@@ -1,6 +1,6 @@
 package com.jezhumble.javasysmon;
 
-public class MacOsXMonitor implements Monitor {
+class MacOsXMonitor implements Monitor {
 
     private static Monitor monitor = null;
 

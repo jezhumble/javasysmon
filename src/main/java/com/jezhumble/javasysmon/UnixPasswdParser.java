@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-public class UnixPasswdParser {
+class UnixPasswdParser {
 
     public HashMap parse() {
         try {

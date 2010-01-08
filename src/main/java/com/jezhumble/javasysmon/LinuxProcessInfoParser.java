@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LinuxProcessInfoParser {
+class LinuxProcessInfoParser {
     private final String stat;
     private final String status;
     private final String cmdline;

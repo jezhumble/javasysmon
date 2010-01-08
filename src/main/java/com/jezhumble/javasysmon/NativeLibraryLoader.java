@@ -3,7 +3,7 @@ package com.jezhumble.javasysmon;
 import java.io.*;
 
 // This is "optimised" based on the fact we only load each native library once.
-public class NativeLibraryLoader {
+class NativeLibraryLoader {
     public void loadLibrary(String libraryName) {
         try {
             InputStream is = this.getClass().getResourceAsStream("/" + libraryName);

@@ -59,4 +59,17 @@
       <arg value="50"/>
     </exec>
   </target>
+
+  <target name="javadoc">
+      <javadoc packagenames="com.jezhumble.javasysmon.*"
+               sourcepath="src/main/java"
+               destdir="target/javadoc"
+               author="true"
+               version="true"
+               windowtitle="Java System Monitor">
+      <doctitle><![CDATA[<h1>Java System Monitor</h1>]]></doctitle>
+      <bottom><![CDATA[<i>Copyright &#169; 2009 ThoughtWorks. All Rights Reserved.</i>]]></bottom>
+      </javadoc>
+  </target>
+
 </project>

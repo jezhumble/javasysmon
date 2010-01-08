@@ -1,6 +1,6 @@
 package com.jezhumble.javasysmon;
 
-public class NullMonitor implements Monitor {
+class NullMonitor implements Monitor {
 
     public NullMonitor() {
         JavaSysMon.setMonitor(this);

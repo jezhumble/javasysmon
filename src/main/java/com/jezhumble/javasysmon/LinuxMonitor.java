@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // Network stats will come from /proc/net/dev; disk stats will be from /proc/diskstats
-public class LinuxMonitor implements Monitor {
+class LinuxMonitor implements Monitor {
 
     private static final Pattern TOTAL_MEMORY_PATTERN =
             Pattern.compile("MemTotal:\\s+(\\d+) kB", Pattern.MULTILINE);

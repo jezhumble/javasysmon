@@ -1,6 +1,6 @@
 package com.jezhumble.javasysmon;
 
-public class WindowsMonitor implements Monitor {
+class WindowsMonitor implements Monitor {
     private static Monitor monitor = null;
 
     static {
