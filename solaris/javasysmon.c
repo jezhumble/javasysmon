@@ -19,12 +19,18 @@
 #include <dirent.h>
 #include <limits.h>
 #include <signal.h>
+#include <procfs.h>
+#include <pwd.h>
 
 #define MAXSTRSIZE 80
 
 static int num_cpus;
 static int pagesize;
 static unsigned long long phys_mem;
+
+long timespec_to_millisecs(timestruc_t time) {
+	return (time.tv_sec * 1000) + (time.tv_nsec / 1000000);
+}
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM * vm, void * reserved)
 {
@@ -208,54 +214,37 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_currentPid (
   return (jint) getpid();
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_MacOsXMonitor_processTable (JNIEnv *env, jobject object)
+JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_psinfoToProcess (JNIEnv *env, jobject object, jbyteArray psinfo, jbyteArray prusage)
 {
   jclass	process_info_class;
   jmethodID	process_info_constructor;
   jobject	process_info;
-  jobjectArray  process_info_array;
-  DIR           *dir;
-  struct dirent *dp;
-  char          pname[PATH_MAX];
-  int           procfd;
-  psinfo_t      info;
+  psinfo_t      *info;
+  prusage_t     *usage;
+  struct passwd	*user;
 
-  process_info_array = (*env)->NewObjectArray(env, count, (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo"), NULL);
   process_info_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/ProcessInfo");
   process_info_constructor = (*env)->GetMethodID(env, process_info_class, "<init>",
 						 "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
-
-  *dir = opendir("/proc");
-  while ((dp = readdir(dir))) {
-    if (dp->d_name[0] == '.')
-      continue;
-    snprintf(pname, sizeof(pname), "/proc/%s/psinfo", dp->d_name);
-  again:
-    if ((procfd = open(pname, O_RDONLY)) == -1)
-      continue; // process has exited
-    if (read(procfd, (char *)&info, sizeof (info)) < 0) {
-      int saverr = errno;
-      (void) close(procfd);
-      if (saverr == EAGAIN)
-	goto again;
-      if (saverr != ENOENT)
-	continue;
-      process_info = (*env)->NewObject(env, process_info_class, process_info_constructor,
-				       (jint) info.pr_pid,
-				       (jint) info.pr_ppid,
-				       (*env)->NewStringUTF(env, info.pr_fname),
-				       (*env)->NewStringUTF(env, ""),
-				       (*env)->NewStringUTF(env, ""),
-				       (jlong) 0, (jlong) 0,
-				       (jlong) info.pr_rssize * 1024,
-				       (jlong) info.pr_size * 1024);
-      (*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
-    }
-
-  }
-
+  info = (psinfo_t*) (*env)->GetByteArrayElements(env, psinfo, NULL);
+  usage = (prusage_t*) (*env)->GetByteArrayElements(env, prusage, NULL);
+  user = getpwuid(info->pr_uid);
+  // when somebody wants to get the command line, the trick is to get info->pr_argc (argument count)
+  // and info->pr_argv (pointer to initial argument vector) and use it as an offset into /proc/<pid>/as
+  process_info = (*env)->NewObject(env, process_info_class, process_info_constructor,
+			       (jint) info->pr_pid,
+			       (jint) info->pr_ppid,
+			       (*env)->NewStringUTF(env, ""),
+			       (*env)->NewStringUTF(env, info->pr_fname),
+			       (*env)->NewStringUTF(env, user->pw_name),
+			       (jlong) timespec_to_millisecs(usage->pr_utime),
+			       (jlong) timespec_to_millisecs(usage->pr_stime),
+			       (jlong) info->pr_rssize * 1024,
+			       (jlong) info->pr_size * 1024);
+  (*env)->ReleaseByteArrayElements(env, psinfo, (jbyte*) info, 0);
+  (*env)->ReleaseByteArrayElements(env, prusage, (jbyte*) usage, 0);
   (*env)->DeleteLocalRef(env, process_info_class);
-  return process_info_array;
+  return process_info;
 }
 
 JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_killProcess (JNIEnv *env, jobject object, jint pid) {

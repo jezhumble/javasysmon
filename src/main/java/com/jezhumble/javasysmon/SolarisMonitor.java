@@ -9,7 +9,7 @@ public class SolarisMonitor implements Monitor {
     static {
         if (System.getProperty("os.name").toLowerCase().startsWith("sunos")) {
             if (System.getProperty("os.arch").toLowerCase().startsWith("x86")) {
-                new NativeLibraryLoader().loadLibrary("libjavasysmonsolx86.so");
+                new NativeLibraryLoader().loadLibrary("javasysmonsolx86.so");
                 monitor = new SolarisMonitor();
             }
         }

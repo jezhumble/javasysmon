@@ -72,6 +72,14 @@
    JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_killProcess
      (JNIEnv *, jobject, jint);
 
+  /*
+   * Class:     com_jezhumble_javasysmon_SolarisMonitor
+   * Method:    psinfoToProcess
+   * Signature: ([B[B)Lcom/jezhumble/javasysmon/ProcessInfo;
+   */
+   JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_SolarisMonitor_psinfoToProcess
+     (JNIEnv *, jobject, jbyteArray, jbyteArray);
+
   #ifdef __cplusplus
   }
   #endif
