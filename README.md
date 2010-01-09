@@ -5,7 +5,7 @@ JavaSysMon is designed to provide an OS-independent way to manage OS processes a
 
 Currently it supports Mac OS X, Linux, Windows, and Solaris. Ultimately we aim to support everything from AIX to Android.
 
-If you’re interested in adding support for a new platform, check out the project wiki.
+If you’re interested in adding support for a new platform, check out the [project wiki](http://wiki.github.com/jezhumble/javasysmon).
 
 Download latest
 ---------------
@@ -42,6 +42,11 @@ Current support and limitations
 * Solaris CPU usage only correctly reports usage for first CPU.
 * Supports Java 1.4 and above
 * CPU speed on Linux only reports correct values for Intel CPUs
+
+Source code
+-----------
+
+The Java source code sits under src/main/java. The C source code is in src/main/c, with a subdirectory for each platform supported by JavaSysMon. The compiled binaries are stored in lib/native, and it is these that are used to build the jar when you run ant. So if you change the c source, you'll need to compile and copy the binary to lib/native before running ant in order to test your changes.
 
 License
 -------
