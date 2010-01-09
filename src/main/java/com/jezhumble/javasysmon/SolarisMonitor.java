@@ -1,6 +1,7 @@
 package com.jezhumble.javasysmon;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 class SolarisMonitor implements Monitor {
     private static Monitor monitor = null;
@@ -27,37 +28,28 @@ class SolarisMonitor implements Monitor {
         return System.getProperty("os.name");
     }
 
-    public native int numCpus();
-
-    public native long cpuFrequencyInHz();
-
-    public native long uptimeInSeconds();
-
-    public native int currentPid();
-
-    public native CpuTimes cpuTimes();
-
-    public native MemoryStats physical();
-
-    public native MemoryStats swap();
-
     public ProcessInfo[] processTable() {
+        ArrayList processTable = new ArrayList();
         final String[] pids = fileUtils.pidsFromProcFilesystem();
-        ProcessInfo[] processTable = new ProcessInfo[pids.length];
         for (int i = 0; i < pids.length; i++) {
             try {
                 byte[] psinfo = fileUtils.slurpToByteArray("/proc/" + pids[i] + "/psinfo");
                 byte[] usage = fileUtils.slurpToByteArray("/proc/" + pids[i] + "/usage");
-                processTable[i] = psinfoToProcess(psinfo, usage);
+                processTable.add(psinfoToProcess(psinfo, usage));
             } catch (IOException e) {
                 // process doesn't exist any more
-                processTable[i] = null;
             }
         }
-        return processTable;
+        return (ProcessInfo[]) processTable.toArray();
     }
 
     public native ProcessInfo psinfoToProcess(byte[] psinfo, byte[] usage);
-
+    public native int numCpus();
+    public native long cpuFrequencyInHz();
+    public native long uptimeInSeconds();
+    public native int currentPid();
+    public native CpuTimes cpuTimes();
+    public native MemoryStats physical();
+    public native MemoryStats swap();
     public native void killProcess(int pid);
 }

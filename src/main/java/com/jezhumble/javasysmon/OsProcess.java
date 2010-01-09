@@ -49,6 +49,7 @@ public class OsProcess {
 
     /**
      * Gets the list of child processes of this object.
+     *
      * @return The list of child processes of this object.
      */
     public List children() {
@@ -57,6 +58,7 @@ public class OsProcess {
 
     /**
      * Information about this process.
+     *
      * @return Information about this process.
      */
     public ProcessInfo processInfo() {
@@ -74,7 +76,7 @@ public class OsProcess {
         if (this.processInfo != null && this.processInfo.getPid() == pid) {
             return this;
         }
-        for (Iterator it = children.iterator(); it.hasNext(); ) {
+        for (Iterator it = children.iterator(); it.hasNext();) {
             final OsProcess found = ((OsProcess) it.next()).find(pid);
             if (found != null) {
                 return found;
@@ -88,14 +90,16 @@ public class OsProcess {
      * {@link JavaSysMon#visitProcessTree}
      *
      * @param processVisitor An instance of {@link ProcessVisitor}
-     * @param level The level currently being visited
+     * @param level          The level currently being visited
      */
     public void accept(ProcessVisitor processVisitor, int level) {
-        for (Iterator it = children.iterator(); it.hasNext(); ) {
+        for (Iterator it = children.iterator(); it.hasNext();) {
             ((OsProcess) it.next()).accept(processVisitor, level + 1);
         }
-        if (processVisitor.visit(this, level)) {
-            new JavaSysMon().killProcess(processInfo.getPid());
+        if (this.processInfo != null) {
+            if (processVisitor.visit(this, level)) {
+                new JavaSysMon().killProcess(processInfo.getPid());
+            }
         }
     }
 }

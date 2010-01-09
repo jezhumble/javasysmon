@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,22 +105,21 @@ class LinuxMonitor implements Monitor {
     }
 
     public ProcessInfo[] processTable() {
-        try {
-            final String[] pids = fileUtils.pidsFromProcFilesystem();
-            ProcessInfo[] processTable = new ProcessInfo[pids.length];
-            for (int i = 0; i < pids.length; i++) {
+        ArrayList processTable = new ArrayList();
+        final String[] pids = fileUtils.pidsFromProcFilesystem();
+        for (int i = 0; i < pids.length; i++) {
+            try {
                 String stat = fileUtils.slurp("/proc/" + pids[i] + "/stat");
                 String status = fileUtils.slurp("/proc/" + pids[i] + "/status");
                 String cmdline = fileUtils.slurp("/proc/" + pids[i] + "/cmdline");
                 UnixPasswdParser passwdParser = new UnixPasswdParser();
                 final LinuxProcessInfoParser parser = new LinuxProcessInfoParser(stat, status, cmdline, passwdParser.parse(), userHz);
-                processTable[i] = parser.parse();
+                processTable.add(parser.parse());
+            } catch (IOException ioe) {
+                // process probably died since we got the process list
             }
-            return processTable;
-        } catch (IOException ioe) {
-            System.err.println("Error getting process table: " + ioe.getMessage());
-            return new ProcessInfo[0];
         }
+        return (ProcessInfo[]) processTable.toArray();
     }
 
     public CpuTimes cpuTimes() {
@@ -138,7 +138,7 @@ class LinuxMonitor implements Monitor {
 
     public void killProcess(int pid) {
         try {
-            ProcessKiller.DESTROY_PROCESS.invoke(null, new Object[] { new Integer(pid) });
+            ProcessKiller.DESTROY_PROCESS.invoke(null, new Object[]{new Integer(pid)});
         } catch (Exception e) {
             throw new RuntimeException("Could not kill process id " + pid, e);
         }
@@ -170,7 +170,7 @@ class LinuxMonitor implements Monitor {
         static {
             try {
                 Class clazz = Class.forName("java.lang.UNIXProcess");
-                DESTROY_PROCESS = clazz.getDeclaredMethod("destroyProcess", new Class[] { int.class });
+                DESTROY_PROCESS = clazz.getDeclaredMethod("destroyProcess", new Class[]{int.class});
                 DESTROY_PROCESS.setAccessible(true);
             } catch (Exception e) {
                 LinkageError x = new LinkageError("Couldn't get method java.lang.UNIXProcess.destroyProcess(int)");
