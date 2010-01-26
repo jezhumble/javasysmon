@@ -40,7 +40,7 @@ class SolarisMonitor implements Monitor {
                 // process doesn't exist any more
             }
         }
-        return (ProcessInfo[]) processTable.toArray();
+        return (ProcessInfo[]) processTable.toArray(new ProcessInfo[processTable.size()]);
     }
 
     public native ProcessInfo psinfoToProcess(byte[] psinfo, byte[] usage);

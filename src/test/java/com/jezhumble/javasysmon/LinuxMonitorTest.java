@@ -52,4 +52,9 @@ public class LinuxMonitorTest extends TestCase {
         final int pid = monitor.currentPid();
         Assert.assertEquals(31912, pid);
     }
+
+    public void testShouldReturnTheProcessTable() {
+        LinuxMonitor linuxMonitor = new LinuxMonitor();
+        Assert.assertNotNull(linuxMonitor.processTable());
+    }
 }

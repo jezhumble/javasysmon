@@ -119,7 +119,7 @@ class LinuxMonitor implements Monitor {
                 // process probably died since we got the process list
             }
         }
-        return (ProcessInfo[]) processTable.toArray();
+        return (ProcessInfo[]) processTable.toArray(new ProcessInfo[processTable.size()]);
     }
 
     public CpuTimes cpuTimes() {
