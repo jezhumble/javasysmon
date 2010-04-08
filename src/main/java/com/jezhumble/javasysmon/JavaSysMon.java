@@ -240,7 +240,10 @@ public class JavaSysMon implements Monitor {
      * @param processVisitor The visitor
      */
     public void visitProcessTree(final int pid, final ProcessVisitor processVisitor) {
-        processTree().find(pid).accept(processVisitor, 0);
+        final OsProcess process = processTree().find(pid);
+        if (process != null) {
+            process.accept(processVisitor, 0);
+        }
     }
 
     /**
