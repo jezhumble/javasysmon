@@ -100,6 +100,16 @@ public class JavaSysMon implements Monitor {
         }
     }
 
+    /**
+     * Whether or not JavaSysMon is running on a supported platform.
+     *
+     * @return <code>true</code> if the platform is supported,
+     * <code>false</code> if it isn't.
+     */
+    public boolean supportedPlatform() {
+        return !(monitor instanceof NullMonitor);
+    }
+
     private static String secsInDaysAndHours(long seconds) {
         long days = seconds / (60 * 60 * 24);
         long hours = (seconds / (60 * 60)) - (days * 24);
