@@ -7,7 +7,7 @@
  *  Licensed under the terms of the New BSD license.
  *  TODO: Error checking
  */
-#define _WIN32_WINNT 0x0501
+#define _WIN64_WINNT 0x0501
 #include <jni.h>
 #include <windows.h>
 #include <winbase.h>
@@ -78,30 +78,38 @@ JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_cpuTimes 
 
 JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_physical (JNIEnv *env, jobject obj)
 {
-  MEMORYSTATUS status;
+  PERFORMANCE_INFORMATION perfinfo;
   jclass		memory_stats_class;
   jmethodID	memory_stats_constructor;
   jobject		memory_stats;
+  DWORD			pagesize;
 
-  GlobalMemoryStatus (&status);
+  GetPerformanceInfo (&perfinfo, sizeof(perfinfo));
+  pagesize = perfinfo.PageSize;
   memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
   memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
-  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) status.dwAvailPhys, (jlong) status.dwTotalPhys);
+  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor,
+	  (jlong) (pagesize * perfinfo.PhysicalAvailable),
+	  (jlong) (pagesize * perfinfo.PhysicalTotal));
   (*env)->DeleteLocalRef(env, memory_stats_class);
   return memory_stats;
 }
 
 JNIEXPORT jobject JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_swap (JNIEnv *env, jobject obj)
 {
-  MEMORYSTATUS status;
+  PERFORMANCE_INFORMATION perfinfo;
   jclass		memory_stats_class;
   jmethodID	memory_stats_constructor;
   jobject		memory_stats;
+  DWORD			pagesize;
 
-  GlobalMemoryStatus (&status);
+  GetPerformanceInfo (&perfinfo, sizeof(perfinfo));
+  pagesize = perfinfo.PageSize;
   memory_stats_class = (*env)->FindClass(env, "com/jezhumble/javasysmon/MemoryStats");
   memory_stats_constructor = (*env)->GetMethodID(env, memory_stats_class, "<init>", "(JJ)V");
-  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor, (jlong) status.dwAvailVirtual, (jlong) status.dwTotalVirtual);
+  memory_stats = (*env)->NewObject(env, memory_stats_class, memory_stats_constructor,
+	  (jlong) (pagesize * perfinfo.CommitTotal),
+	  (jlong) (pagesize * perfinfo.CommitLimit));
   (*env)->DeleteLocalRef(env, memory_stats_class);
   return memory_stats;
 }
