@@ -7,7 +7,7 @@ class NullMonitor implements Monitor {
     }
 
     public String osName() {
-        return null;
+        return System.getProperty("os.name");
     }
 
     public int numCpus() {

@@ -29,6 +29,8 @@ class LinuxMonitor implements Monitor {
             Pattern.compile("([\\d]*).*");
     private static final Pattern PID_PATTERN =
             Pattern.compile("([\\d]*).*");
+    private static final Pattern DISTRIBUTION =
+            Pattern.compile("DISTRIB_DESCRIPTION=\"(.*)\"", Pattern.MULTILINE);
 
     private FileUtils fileUtils;
     private int userHz = 100; // Shouldn't be hardcoded. See below.
@@ -52,7 +54,11 @@ class LinuxMonitor implements Monitor {
     }
 
     public String osName() {
-        return "Linux"; // TODO: distro detection
+        String distribution = fileUtils.runRegexOnFile(DISTRIBUTION, "/etc/lsb-release");
+        if (null == distribution) {
+            return System.getProperty("os.name");
+        }
+        return distribution;
     }
 
     public MemoryStats physical() {
