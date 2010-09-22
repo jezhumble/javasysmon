@@ -4,6 +4,9 @@ import java.io.*;
 
 // This is "optimised" based on the fact we only load each native library once.
 class NativeLibraryLoader {
+
+    public static final String JAVA_SYS_MON_TEMP_DIR = "JAVA_SYS_MON_TEMP_DIR";
+
     public void loadLibrary(String libraryName) {
         try {
             InputStream is = this.getClass().getResourceAsStream("/" + libraryName);
@@ -27,7 +30,7 @@ class NativeLibraryLoader {
         os.close();
     }
 
-    private File getTempFile(String libraryName) throws IOException {
+    File getTempFile(String libraryName) throws IOException {
         int suffixSeparator = libraryName.lastIndexOf(".");
         String suffix = null;
         String prefix = libraryName;
@@ -35,8 +38,16 @@ class NativeLibraryLoader {
             suffix = libraryName.substring(suffixSeparator);
             prefix = libraryName.substring(0, suffixSeparator - 1);
         }
-        File tempFile = File.createTempFile(prefix, suffix);
+        File tempFile = createTempFile(suffix, prefix);
         tempFile.deleteOnExit();
         return tempFile;
+    }
+
+    private File createTempFile(String suffix, String prefix) throws IOException {
+        String tempDirProp = System.getProperty(JAVA_SYS_MON_TEMP_DIR);
+        if (tempDirProp == null || tempDirProp.isEmpty()) {
+            return File.createTempFile(prefix, suffix);
+        }
+        return File.createTempFile(prefix, suffix, new File(tempDirProp));
     }
 }
