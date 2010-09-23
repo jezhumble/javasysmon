@@ -63,7 +63,7 @@ public class CpuTimes {
      */
     public float getCpuUsage(CpuTimes previous) {
         if (getIdleMillis() == previous.getIdleMillis()) {
-            return getTotalMillis() - getIdleMillis();
+            return 1f;
         }
         return 1 - ((float) (getIdleMillis() - previous.getIdleMillis())) /
                 (float) (getTotalMillis() - previous.getTotalMillis());
