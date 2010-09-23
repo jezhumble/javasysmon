@@ -62,10 +62,10 @@ public class CpuTimes {
      * that the CPUs have spent working. 1 represents 100% usage, 0 represents 0% usage.
      */
     public float getCpuUsage(CpuTimes previous) {
-        if (idleMillis == previous.idleMillis || getTotalMillis() == previous.getTotalMillis()) {
-            return 0;
+        if (getIdleMillis() == previous.getIdleMillis()) {
+            return getTotalMillis() - getIdleMillis();
         }
-        return 1 - ((float) (idleMillis - previous.idleMillis)) /
+        return 1 - ((float) (getIdleMillis() - previous.getIdleMillis())) /
                 (float) (getTotalMillis() - previous.getTotalMillis());
     }
 }
