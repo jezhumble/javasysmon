@@ -66,17 +66,18 @@ public class FileUtils {
         if (stream == null) {
             return null;
         }
-        StringBuilder sb = new StringBuilder();
+        StringWriter sw = new StringWriter();
         String line;
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
             while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
+                sw.write(line);
+                sw.write('\n');
             }
         } finally {
             stream.close();
         }
-        return sb.toString();
+        return sw.toString();
     }
 
     /**
