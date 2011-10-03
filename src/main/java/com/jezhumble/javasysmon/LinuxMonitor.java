@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // Network stats will come from /proc/net/dev; disk stats will be from /proc/diskstats
 class LinuxMonitor implements Monitor {
+
+    private static final Logger LOG = Logger.getLogger(LinuxMonitor.class.getName());
 
     private static final Pattern TOTAL_MEMORY_PATTERN =
             Pattern.compile("MemTotal:\\s+(\\d+) kB", Pattern.MULTILINE);
@@ -121,6 +125,9 @@ class LinuxMonitor implements Monitor {
                 UnixPasswdParser passwdParser = new UnixPasswdParser();
                 final LinuxProcessInfoParser parser = new LinuxProcessInfoParser(stat, status, cmdline, passwdParser.parse(), userHz);
                 processTable.add(parser.parse());
+            } catch (ParseException pe) {
+                // Skip this process, but log a warning for diagnosis.
+                LOG.log(Level.WARNING, pe.getMessage(), pe);
             } catch (IOException ioe) {
                 // process probably died since we got the process list
             }

@@ -1,0 +1,37 @@
+Name:	test_command
+State:	S (sleeping)
+Tgid:	25883
+Pid:	25883
+PPid:	25097
+TracerPid:	0
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+FDSize:	256
+Groups:	4 20 24 46 108 123 124 1000
+VmPeak:	    4448 kB
+VmSize:	    4448 kB
+VmLck:	       0 kB
+VmHWM:	    1484 kB
+VmRSS:	    1484 kB
+VmData:	     640 kB
+VmStk:	      88 kB
+VmExe:	     692 kB
+VmLib:	    1700 kB
+VmPTE:	      20 kB
+Threads:	1
+SigQ:	0/16382
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000010000
+SigIgn:	0000000000000004
+SigCgt:	0000000000010002
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	ffffffffffffffff
+Cpus_allowed:	00000000,0000000f
+Cpus_allowed_list:	0-3
+Mems_allowed:	1
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	1
+nonvoluntary_ctxt_switches:	2

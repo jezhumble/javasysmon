@@ -28,16 +28,58 @@ class LinuxProcessInfoParser {
         this.userHz = userHz;
     }
 
-    public ProcessInfo parse() {
-        String[] statElements = stat.split(" ");
-        return new ProcessInfo(Integer.parseInt(statElements[0]),
-                Integer.parseInt(statElements[3]),
-                trim(cmdline), getFirstMatch(STATUS_NAME_MATCHER, status),
+    public ProcessInfo parse() throws ParseException {
+        int openParen = stat.indexOf("(");
+        int closeParen = stat.lastIndexOf(")");
+        if (openParen <= 1 || closeParen < 0 || closeParen > stat.length() - 2) {
+            throw new ParseException("Stat '" + stat + "' does not include expected parens around process name");
+        }
+
+        // Start splitting after close of proc name
+        String[] statElements = stat.substring(closeParen + 2).split(" ");
+        if (statElements.length < 13) {
+            throw new ParseException("Stat '" + stat + "' contains fewer elements than expected");
+        }
+        
+        String pidStr = stat.substring(0, openParen - 1);
+
+        int pid;
+        int parentPid;
+        long userMillis;
+        long systemMillis;
+        try
+        {
+            pid = Integer.parseInt(pidStr);
+            parentPid = Integer.parseInt(statElements[1]);
+            userMillis = Long.parseLong(statElements[11]) * (1000 / userHz);
+            systemMillis = Long.parseLong(statElements[12]) * (1000 / userHz);
+        }
+        catch (NumberFormatException e)
+        {
+            throw new ParseException("Unable to parse stat '" + stat + "'");
+        }
+
+        long residentBytes;
+        long totalBytes;
+        try
+        {
+            residentBytes = Long.parseLong(getFirstMatch(STATUS_VM_RSS_MATCHER, status)) * 1024;
+            totalBytes = Long.parseLong(getFirstMatch(STATUS_VM_SIZE_MATCHER, status)) * 1024;
+        }
+        catch (NumberFormatException e)
+        {
+            throw new ParseException("Unable to extract memory usage information from status '" + status + "'");
+        }
+
+        return new ProcessInfo(pid,
+                parentPid,
+                trim(cmdline),
+                getFirstMatch(STATUS_NAME_MATCHER, status),
                 (String) uids.get(getFirstMatch(STATUS_UID_MATCHER, status)),
-                Long.parseLong(statElements[13]) * (1000 / userHz),
-                Long.parseLong(statElements[14]) * (1000 / userHz),
-                Long.parseLong(getFirstMatch(STATUS_VM_RSS_MATCHER, status)) * 1024,
-                Long.parseLong(getFirstMatch(STATUS_VM_SIZE_MATCHER, status)) * 1024);
+                userMillis,
+                systemMillis,
+                residentBytes,
+                totalBytes);
     }
 
     private String trim(String cmdline) {
