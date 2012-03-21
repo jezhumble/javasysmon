@@ -50,9 +50,16 @@ public class FileUtils {
     public byte[] slurpToByteArray(String fileName) throws IOException {
         File fileToRead = new File(fileName);
         byte[] contents = new byte[(int) fileToRead.length()];
-        final InputStream inputStream = new FileInputStream(fileToRead);
-        inputStream.read(contents);
-        return contents;
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(fileToRead);
+            inputStream.read(contents);
+            return contents;
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
     }
 
     /**

@@ -9,6 +9,11 @@ import java.util.HashMap;
 class UnixPasswdParser {
 
     public HashMap parse(BufferedReader reader) {
+        if (reader == null) {
+            System.err.println("Error parsing password file: reader is null");
+            return new HashMap();
+        }
+
         HashMap users = new HashMap();
         try {
             String line;
@@ -22,6 +27,12 @@ class UnixPasswdParser {
         } catch (IOException e) {
             System.err.println("Error parsing password file: " + e.getMessage());
             return new HashMap();
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                System.err.println("Error closing reader: " + e.getMessage());
+            }
         }
     }
 
