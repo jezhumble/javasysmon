@@ -135,6 +135,161 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_currentPid (
   return (jint) current_pid;
 }
 
+/**
+ *	Converts the given UTF-16 string to UTF-8. Returns ZERO upon success, NON-ZERO otherwise.
+ *	Upon success, the parameter utf8 points to the UTF-8 string. It is the calling function's responsibility that this resource is freed.
+ *  Upon error the parameter utf8 will be set to NULL.
+ */
+DWORD WideCharToUTF8(wchar_t* utf16, char** utf8)
+{
+	int utf8_length;
+
+	*utf8 = NULL;
+
+	utf8_length = WideCharToMultiByte(
+		CP_UTF8,           // Convert to UTF-8
+		0,                 // No special character conversions required
+		// (UTF-16 and UTF-8 support the same characters)
+		utf16,             // UTF-16 string to convert
+		-1,                // utf16 is NULL terminated (if not, use length)
+		NULL,              // Determining correct output buffer size
+		0,                 // Determining correct output buffer size
+		NULL,              // Must be NULL for CP_UTF8
+		NULL);             // Must be NULL for CP_UTF8
+
+	if (utf8_length == 0) {
+		// Error - call GetLastError for details
+		return GetLastError();
+	}
+
+	*utf8 = (char*)malloc(sizeof(char) * utf8_length); // Allocate space for UTF-8 string
+
+	utf8_length = WideCharToMultiByte(
+		CP_UTF8,           // Convert to UTF-8
+		0,                 // No special character conversions required
+		// (UTF-16 and UTF-8 support the same characters)
+		utf16,             // UTF-16 string to convert
+		-1,                // utf16 is NULL terminated (if not, use length)
+		*utf8,              // UTF-8 output buffer
+		utf8_length,       // UTF-8 output buffer size
+		NULL,              // Must be NULL for CP_UTF8
+		NULL);             // Must be NULL for CP_UTF8
+
+	if (utf8_length == 0) {
+		// Error - call GetLastError for details
+		free(*utf8);
+		*utf8 = NULL;
+		return GetLastError();
+	}
+
+	return 0;
+}
+
+typedef struct _LSA_UNICODE_STRING {
+	USHORT Length;
+	USHORT MaximumLength;
+	PWSTR  Buffer;
+} LSA_UNICODE_STRING, *PLSA_UNICODE_STRING, UNICODE_STRING, *PUNICODE_STRING;
+
+typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
+	HANDLE ProcessHandle,
+	DWORD ProcessInformationClass,
+	PVOID ProcessInformation,
+	DWORD ProcessInformationLength,
+	PDWORD ReturnLength
+	);
+
+typedef struct _PROCESS_BASIC_INFORMATION
+{
+	LONG ExitStatus;
+	PVOID PebBaseAddress;
+	ULONG_PTR AffinityMask;
+	LONG BasePriority;
+	ULONG_PTR UniqueProcessId;
+	ULONG_PTR ParentProcessId;
+} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
+
+/**
+ *	Retrieve the original command line from the process environment block (PEB). Returns ZERO upon success, NON-ZERO otherwise.
+ *	Upon success, the parameter commandLine points to the original command line string (UTF-16) that was used to start the given process.
+ *  It is the calling function's responsibility that this resource is freed.
+ *  Upon error the parameter commandLine will be set to NULL.
+ */
+DWORD GetCommandLineFromPeb(DWORD dwPid, wchar_t** commandLine)
+{
+	DWORD dw;
+#ifdef _WIN64
+	SIZE_T read;
+#else
+	DWORD read;
+#endif
+	HANDLE hProcess;
+	_NtQueryInformationProcess pNtQip;
+	PROCESS_BASIC_INFORMATION pbInfo;
+	UNICODE_STRING cmdline;
+	WCHAR* wcmdLine;
+
+	*commandLine = NULL;
+
+	hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwPid );
+	if( !hProcess ) {
+		return GetLastError();
+	}
+
+	pNtQip = (_NtQueryInformationProcess) GetProcAddress(GetModuleHandleA("ntdll.dll"),
+		"NtQueryInformationProcess");
+	if(!pNtQip) {
+		return GetLastError();
+	}
+
+	pNtQip(hProcess, 0, &pbInfo, sizeof(pbInfo), NULL);
+
+#ifdef _WIN64
+	ReadProcessMemory(hProcess, (PCHAR)(pbInfo.PebBaseAddress) + 0x20, &dw, sizeof(dw), &read);
+#else
+	ReadProcessMemory(hProcess, (PCHAR)(pbInfo.PebBaseAddress) + 0x10, &dw, sizeof(dw),	&read);
+#endif
+
+#ifdef _WIN64
+	ReadProcessMemory(hProcess, (PCHAR)dw+112, &cmdline, sizeof(cmdline), &read);
+#else
+	ReadProcessMemory(hProcess, (PCHAR)dw+64, &cmdline, sizeof(cmdline), &read);
+#endif
+
+	wcmdLine = (WCHAR *)malloc(sizeof(char)*(cmdline.Length + 2));
+	if( !wcmdLine )
+		return -1;
+
+	ReadProcessMemory(hProcess, (PVOID)cmdline.Buffer, wcmdLine,
+		cmdline.Length+2, &read);
+
+	*commandLine = wcmdLine;
+
+	CloseHandle(hProcess);
+
+	return 0;
+}
+
+/**
+ *	Retrieve the original command line from the process environment block (PEB). Returns ZERO upon success, NON-ZERO otherwise.
+ *
+ *	This function is similar to GetCommandLineFromPeb, but returns an UTF-8 string instead.
+ */
+DWORD GetCommandLineUTF8(DWORD dwPid, char** utf8CommandLine) {
+	wchar_t* wcCommandLine;
+
+	if(!GetCommandLineFromPeb(dwPid, &wcCommandLine)) {
+		if(!WideCharToUTF8(wcCommandLine, utf8CommandLine)) {
+			free(wcCommandLine);
+			return 0;
+		} else {
+			free(wcCommandLine);
+		}
+	}
+
+	return GetLastError();
+}
+
 JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_processTable (JNIEnv *env, jobject object)
 {
 	jclass		process_info_class;
@@ -145,7 +300,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	SIZE_T			working_set_size, pagefile_usage;
 	unsigned int    i, ppid;
     TCHAR           process_name[MAX_PATH] = TEXT("<unknown>");
-    TCHAR           process_command[MAX_PATH] = TEXT("<unknown>");
+    TCHAR           process_command[MAX_PATH+1] = TEXT("<unknown>");
+	char*			process_command_raw;
     TCHAR			user_name[MAX_PATH] = TEXT("<unknown>");
     TCHAR			domain_name[MAX_PATH] = TEXT("<unknown>");
     FILETIME        created, exit, kernel, user;
@@ -155,7 +311,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	PROCESS_MEMORY_COUNTERS pmc;
 	PROCESSENTRY32  process_entry;
 	SID_NAME_USE	sid_name_use;
-	
+
 	snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	process_entry.dwSize = sizeof(PROCESSENTRY32);
 	if (!EnumProcesses(processes, sizeof(processes), &buffer_size))
@@ -168,7 +324,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	  working_set_size = pagefile_usage = ppid = 0;
 	  user_token = NULL;
 //	  &process_name = TEXT("<unknown>");
-//	  &process_command = TEXT("<unknown>");
 	  // You can't get ppid from the usual PSAPI calls, so you need to use the ToolHelp stuff
 	  // Thanks to http://www.codeproject.com/KB/threads/ParentPID.aspx?msg=1637993 for the tip
 	  if (Process32First(snapshot, &process_entry)) {
@@ -185,8 +340,14 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	    if (EnumProcessModules(process, &module, sizeof(module), &buffer_size)) {
 	      GetModuleBaseName(process, module, process_name, sizeof(process_name) / sizeof(TCHAR));
 	    }
-	    // get command name
-	    GetProcessImageFileName(process, process_command, sizeof(process_command) / sizeof(TCHAR));
+	    // get command name and copy to memory on the stack
+		// (somehow NewStringUTF(process_command_raw); free(process_command_raw); segfaults, and this doesn't)
+		GetCommandLineUTF8(processes[i], &process_command_raw);
+	    if(process_command_raw) {
+			memcpy(process_command, process_command_raw, MAX_PATH);
+			process_command[MAX_PATH] = '\0';
+			free(process_command_raw);
+		}
 	    // get CPU usage
 	    GetProcessTimes(process, &created, &exit, &kernel, &user);
 	    // get owner (thanks to http://www.codeproject.com/KB/cs/processownersid.aspx)
@@ -225,13 +386,13 @@ cleanup:
 							 "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
 	  process_info = (*env)->NewObject(env, process_info_class, process_info_constructor, (jint) processes[i],
 					   (jint) ppid, // parent id
-					   (*env)->NewStringUTF(env, process_command), // command
+					   (*env)->NewStringUTF(env, process_command == NULL ? "<unknown>" : process_command), // command
 					   (*env)->NewStringUTF(env, process_name), // name
 					   (*env)->NewStringUTF(env, user_token == NULL ? "<unknown>" : domain_name), // owner
 					   (jlong) filetime_to_millis(&user), // user millis
 					   (jlong) filetime_to_millis(&kernel), // system millis
 					   (jlong) working_set_size, // resident bytes
-					   (jlong) working_set_size + pagefile_usage); // total bytes 
+					   (jlong) working_set_size + pagefile_usage); // total bytes
 	  (*env)->SetObjectArrayElement(env, process_info_array, i, process_info);
 	  (*env)->DeleteLocalRef(env, process_info_class);
 	}
