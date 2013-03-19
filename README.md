@@ -10,7 +10,7 @@ If you’re interested in adding support for a new platform, check out the [proj
 Download latest
 ---------------
 
-The current version of JavaSysMon is 0.3.0, released January 8th. You can get it here: http://github.com/jezhumble/javasysmon/downloads
+The current version of JavaSysMon is 0.3.4, released March 19th 2013. You can get it here: http://continuousdelivery.com/downloads/javasysmon/javasysmon-0.3.4.jar
 
 Run it with java -jar
 
