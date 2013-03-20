@@ -45,7 +45,7 @@ class NativeLibraryLoader {
 
     private File createTempFile(String suffix, String prefix) throws IOException {
         String tempDirProp = System.getProperty(JAVA_SYS_MON_TEMP_DIR);
-        if (tempDirProp == null || tempDirProp.isEmpty()) {
+        if (tempDirProp == null || tempDirProp.trim().length() == 0) {
             return File.createTempFile(prefix, suffix);
         }
         return File.createTempFile(prefix, suffix, new File(tempDirProp));
