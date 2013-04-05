@@ -280,10 +280,10 @@ DWORD GetCommandLineUTF8(DWORD dwPid, char** utf8CommandLine) {
 
 	if(!GetCommandLineFromPeb(dwPid, &wcCommandLine)) {
 		if(!WideCharToUTF8(wcCommandLine, utf8CommandLine)) {
-			free(wcCommandLine);
+			free(wcCommandLine); wcCommandLine = NULL;
 			return 0;
 		} else {
-			free(wcCommandLine);
+			free(wcCommandLine); wcCommandLine = NULL;
 		}
 	}
 
@@ -300,6 +300,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	SIZE_T			working_set_size, pagefile_usage;
 	unsigned int    i, ppid;
     TCHAR           process_name[MAX_PATH] = TEXT("<unknown>");
+    DWORD           process_name_len = 0;
     TCHAR           process_command[MAX_PATH+1] = TEXT("<unknown>");
 	char*			process_command_raw;
     TCHAR			user_name[MAX_PATH] = TEXT("<unknown>");
@@ -322,8 +323,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 
 	for (i = 0; i <count; i++) {
 	  working_set_size = pagefile_usage = ppid = 0;
+          process_name_len = 0;
+	  process_command_raw = NULL;
 	  user_token = NULL;
-//	  &process_name = TEXT("<unknown>");
 	  // You can't get ppid from the usual PSAPI calls, so you need to use the ToolHelp stuff
 	  // Thanks to http://www.codeproject.com/KB/threads/ParentPID.aspx?msg=1637993 for the tip
 	  if (Process32First(snapshot, &process_entry)) {
@@ -338,7 +340,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
           if (processes[i] != 0 && (process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i])) != NULL) {
 	    // get process name
 	    if (EnumProcessModules(process, &module, sizeof(module), &buffer_size)) {
-	      GetModuleBaseName(process, module, process_name, sizeof(process_name) / sizeof(TCHAR));
+	      process_name_len = GetModuleBaseName(process, module, process_name, sizeof(process_name) / sizeof(TCHAR));
 	    }
 	    // get command name and copy to memory on the stack
 		// (somehow NewStringUTF(process_command_raw); free(process_command_raw); segfaults, and this doesn't)
@@ -386,8 +388,8 @@ cleanup:
 							 "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
 	  process_info = (*env)->NewObject(env, process_info_class, process_info_constructor, (jint) processes[i],
 					   (jint) ppid, // parent id
-					   (*env)->NewStringUTF(env, process_command == NULL ? "<unknown>" : process_command), // command
-					   (*env)->NewStringUTF(env, process_name), // name
+					   (*env)->NewStringUTF(env, process_command_raw == NULL ? "<unknown>" : process_command), // command
+					   (*env)->NewStringUTF(env, process_name_len == 0 ? "<unknown>" : process_name), // name
 					   (*env)->NewStringUTF(env, user_token == NULL ? "<unknown>" : domain_name), // owner
 					   (jlong) filetime_to_millis(&user), // user millis
 					   (jlong) filetime_to_millis(&kernel), // system millis
