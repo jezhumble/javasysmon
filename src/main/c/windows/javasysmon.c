@@ -239,6 +239,7 @@ DWORD GetCommandLineFromPeb(DWORD dwPid, wchar_t** commandLine)
 	pNtQip = (_NtQueryInformationProcess) GetProcAddress(GetModuleHandleA("ntdll.dll"),
 		"NtQueryInformationProcess");
 	if(!pNtQip) {
+		CloseHandle(hProcess);
 		return GetLastError();
 	}
 
@@ -257,8 +258,10 @@ DWORD GetCommandLineFromPeb(DWORD dwPid, wchar_t** commandLine)
 #endif
 
 	wcmdLine = (WCHAR *)malloc(sizeof(char)*(cmdline.Length + 2));
-	if( !wcmdLine )
+	if( !wcmdLine ) {
+		CloseHandle(hProcess);
 		return -1;
+        }
 
 	ReadProcessMemory(hProcess, (PVOID)cmdline.Buffer, wcmdLine,
 		cmdline.Length+2, &read);
@@ -408,5 +411,6 @@ JNIEXPORT void JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_killProcess 
   process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
   if (process != NULL) {
     TerminateProcess(process, 1);
+    CloseHandle(process);
   }
 }
