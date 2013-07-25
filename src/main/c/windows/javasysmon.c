@@ -140,11 +140,12 @@ JNIEXPORT jint JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_currentPid (
  *	Upon success, the parameter utf8 points to the UTF-8 string. It is the calling function's responsibility that this resource is freed.
  *  Upon error the parameter utf8 will be set to NULL.
  */
-DWORD WideCharToUTF8(wchar_t* utf16, char** utf8)
+DWORD WideCharToUTF8(wchar_t* utf16, char** utf8, DWORD* out_utf8_len)
 {
 	int utf8_length;
 
 	*utf8 = NULL;
+	*out_utf8_len = 0;
 
 	utf8_length = WideCharToMultiByte(
 		CP_UTF8,           // Convert to UTF-8
@@ -181,6 +182,8 @@ DWORD WideCharToUTF8(wchar_t* utf16, char** utf8)
 		*utf8 = NULL;
 		return GetLastError();
 	}
+
+	*out_utf8_len = utf8_length;
 
 	return 0;
 }
@@ -278,11 +281,11 @@ DWORD GetCommandLineFromPeb(DWORD dwPid, wchar_t** commandLine)
  *
  *	This function is similar to GetCommandLineFromPeb, but returns an UTF-8 string instead.
  */
-DWORD GetCommandLineUTF8(DWORD dwPid, char** utf8CommandLine) {
+DWORD GetCommandLineUTF8(DWORD dwPid, char** utf8CommandLine, DWORD* process_command_len) {
 	wchar_t* wcCommandLine;
 
 	if(!GetCommandLineFromPeb(dwPid, &wcCommandLine)) {
-		if(!WideCharToUTF8(wcCommandLine, utf8CommandLine)) {
+		if(!WideCharToUTF8(wcCommandLine, utf8CommandLine, process_command_len)) {
 			free(wcCommandLine); wcCommandLine = NULL;
 			return 0;
 		} else {
@@ -306,6 +309,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
     DWORD           process_name_len = 0;
     TCHAR           process_command[MAX_PATH+1] = TEXT("<unknown>");
 	char*			process_command_raw;
+	DWORD           process_command_len;
     TCHAR			user_name[MAX_PATH] = TEXT("<unknown>");
     TCHAR			domain_name[MAX_PATH] = TEXT("<unknown>");
     FILETIME        created, exit, kernel, user;
@@ -328,6 +332,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	  working_set_size = pagefile_usage = ppid = 0;
           process_name_len = 0;
 	  process_command_raw = NULL;
+	  process_command_len = 0;
 	  user_token = NULL;
 	  // You can't get ppid from the usual PSAPI calls, so you need to use the ToolHelp stuff
 	  // Thanks to http://www.codeproject.com/KB/threads/ParentPID.aspx?msg=1637993 for the tip
@@ -346,12 +351,13 @@ JNIEXPORT jobjectArray JNICALL Java_com_jezhumble_javasysmon_WindowsMonitor_proc
 	      process_name_len = GetModuleBaseName(process, module, process_name, sizeof(process_name) / sizeof(TCHAR));
 	    }
 	    // get command name and copy to memory on the stack
-		// (somehow NewStringUTF(process_command_raw); free(process_command_raw); segfaults, and this doesn't)
-		GetCommandLineUTF8(processes[i], &process_command_raw);
-	    if(process_command_raw) {
-			memcpy(process_command, process_command_raw, MAX_PATH);
-			process_command[MAX_PATH] = '\0';
-			free(process_command_raw);
+		GetCommandLineUTF8(processes[i], &process_command_raw, &process_command_len);
+		if (process_command_raw) {
+			if (process_command_len > MAX_PATH) {
+				process_command_len = MAX_PATH;
+			}
+			memcpy(process_command, process_command_raw, process_command_len);
+			free(process_command_raw); process_command_raw = 0;
 		}
 	    // get CPU usage
 	    GetProcessTimes(process, &created, &exit, &kernel, &user);
@@ -391,7 +397,7 @@ cleanup:
 							 "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
 	  process_info = (*env)->NewObject(env, process_info_class, process_info_constructor, (jint) processes[i],
 					   (jint) ppid, // parent id
-					   (*env)->NewStringUTF(env, process_command_raw == NULL ? "<unknown>" : process_command), // command
+					   (*env)->NewStringUTF(env, process_command_len == 0 ? "<unknown>" : process_command), // command
 					   (*env)->NewStringUTF(env, process_name_len == 0 ? "<unknown>" : process_name), // name
 					   (*env)->NewStringUTF(env, user_token == NULL ? "<unknown>" : domain_name), // owner
 					   (jlong) filetime_to_millis(&user), // user millis
