@@ -17,7 +17,7 @@ Run it with java -jar
 Building and running
 --------------------
 
-Run ant, and then:
+Run mvn package, and then:
 
     java -jar target/javasysmon.jar
 
@@ -46,7 +46,7 @@ Current support and limitations
 Source code
 -----------
 
-The Java source code sits under src/main/java. The C source code is in src/main/c, with a subdirectory for each platform supported by JavaSysMon. The compiled binaries are stored in lib/native, and it is these that are used to build the jar when you run ant. So if you change the c source, you'll need to compile and copy the binary to lib/native before running ant in order to test your changes.
+The Java source code sits under src/main/java. The C source code is in src/main/c, with a subdirectory for each platform supported by JavaSysMon. The compiled binaries are stored in lib/native, and it is these that are used to build the jar when you run maven. So if you change the c source, you'll need to compile and copy the binary to lib/native before running maven in order to test your changes.
 
 License
 -------
