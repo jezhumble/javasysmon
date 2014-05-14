@@ -3,7 +3,6 @@ package com.jezhumble.javasysmon;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,7 +27,7 @@ class LinuxMonitor implements Monitor {
     private static final Pattern NUM_CPU_PATTERN =
             Pattern.compile("processor\\s+:\\s+(\\d+)", Pattern.MULTILINE);
     private static final Pattern CPU_FREQ_PATTERN =
-            Pattern.compile("model name[^@]*@\\s+([0-9.A-Za-z]*)", Pattern.MULTILINE);
+            Pattern.compile("cpu MHz\\s+:\\s+([0-9.]*)", Pattern.MULTILINE);
     private static final Pattern UPTIME_PATTERN =
             Pattern.compile("([\\d]*).*");
     private static final Pattern PID_PATTERN =
@@ -98,10 +97,8 @@ class LinuxMonitor implements Monitor {
 
     public long cpuFrequencyInHz() {
         String cpuFrequencyAsString = fileUtils.runRegexOnFile(CPU_FREQ_PATTERN, "/proc/cpuinfo");
-        int strLen = cpuFrequencyAsString.length();
-        BigDecimal cpuFrequency = new BigDecimal(cpuFrequencyAsString.substring(0, strLen - 3));
-        long multiplier = getMultiplier(cpuFrequencyAsString.charAt(strLen - 3));
-        return cpuFrequency.multiply(new BigDecimal(Long.toString(multiplier))).longValue();
+        double mhz = Double.parseDouble(cpuFrequencyAsString);
+	return (long)(mhz * 1000000.0);
     }
 
     public long uptimeInSeconds() {
@@ -155,18 +152,6 @@ class LinuxMonitor implements Monitor {
         } catch (Exception e) {
             throw new RuntimeException("Could not kill process id " + pid, e);
         }
-    }
-
-    private long getMultiplier(char multiplier) {
-        switch (multiplier) {
-            case 'G':
-                return 1000000000;
-            case 'M':
-                return 1000000;
-            case 'k':
-                return 1000;
-        }
-        return 0;
     }
 
     private long toMillis(long jiffies) {
