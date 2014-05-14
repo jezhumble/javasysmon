@@ -10,10 +10,12 @@ public class MemoryStats {
     private final static int ONE_MB = 1024 * 1024;
     private final long free;
     private final long total;
+    private final long usable;
 
-    public MemoryStats(long free, long total) {
+    public MemoryStats(long free, long total, long usable) {
         this.free = free;
         this.total = total;
+        this.usable = usable;
     }
 
     /**
@@ -23,6 +25,15 @@ public class MemoryStats {
      */
     public long getFreeBytes() {
         return free;
+    }
+    
+    /**
+     * The amount of memory that is currently usable (free + buffers + cache), in bytes.
+     *
+     * @return The amount of memory that is currently usable.
+     */
+    public long getUsableBytes() {
+        return usable;
     }
 
     /**
@@ -36,6 +47,6 @@ public class MemoryStats {
     }
 
     public String toString() {
-        return "total: " + total / ONE_MB + "Mb free: " + free / ONE_MB + "Mb";
+        return "total: " + total / ONE_MB + "Mb free: " + free / ONE_MB + "Mb usable: " + usable / ONE_MB + "Mb";
     }
 }

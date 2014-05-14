@@ -19,6 +19,10 @@ class LinuxMonitor implements Monitor {
             Pattern.compile("MemTotal:\\s+(\\d+) kB", Pattern.MULTILINE);
     private static final Pattern FREE_MEMORY_PATTERN =
             Pattern.compile("MemFree:\\s+(\\d+) kB", Pattern.MULTILINE);
+    private static final Pattern BUFFERS_MEMORY_PATTERN =
+            Pattern.compile("Buffers:\\s+(\\d+) kB", Pattern.MULTILINE);
+    private static final Pattern CACHE_MEMORY_PATTERN =
+            Pattern.compile("Cached:\\s+(\\d+) kB", Pattern.MULTILINE);
     private static final Pattern TOTAL_SWAP_PATTERN =
             Pattern.compile("SwapTotal:\\s+(\\d+) kB", Pattern.MULTILINE);
     private static final Pattern FREE_SWAP_PATTERN =
@@ -65,20 +69,49 @@ class LinuxMonitor implements Monitor {
         return distribution;
     }
 
-    public MemoryStats physical() {
-        String totalMemory = fileUtils.runRegexOnFile(TOTAL_MEMORY_PATTERN, "/proc/meminfo");
-        long total = Long.parseLong(totalMemory) * 1024;
-        String freeMemory = fileUtils.runRegexOnFile(FREE_MEMORY_PATTERN, "/proc/meminfo");
-        long free = Long.parseLong(freeMemory) * 1024;
-        return new MemoryStats(free, total);
-    }
+	public MemoryStats physical() {
+    	
+		String meminfo = null;
+		Matcher matcher = null;
+    	
+		try {
+			meminfo = fileUtils.slurp("/proc/meminfo");
+		} catch (IOException e) {
+			// couldn't read the file, return 0 for everything
+			return new MemoryStats(0, 0, 0);
+		}
+		
+		matcher = TOTAL_MEMORY_PATTERN.matcher(meminfo);
+		matcher.find();
+		String totalMemory = matcher.group(1);
+		long total = Long.parseLong(totalMemory) * 1024;
+		
+		matcher = FREE_MEMORY_PATTERN.matcher(meminfo);
+		matcher.find();
+		String freeMemory = matcher.group(1);
+		long free = Long.parseLong(freeMemory) * 1024;
+		
+		matcher = BUFFERS_MEMORY_PATTERN.matcher(meminfo);
+		matcher.find();
+		String buffersMemory = matcher.group(1);
+		long buffers = Long.parseLong(buffersMemory) * 1024;
+		
+		matcher = CACHE_MEMORY_PATTERN.matcher(meminfo);
+		matcher.find();
+		String cacheMemory = matcher.group(1);
+		long cache = Long.parseLong(cacheMemory) * 1024;
+		
+		long usable = free + buffers + cache;
+		
+		return new MemoryStats(free, total, usable);
+	}
 
     public MemoryStats swap() {
         String totalMemory = fileUtils.runRegexOnFile(TOTAL_SWAP_PATTERN, "/proc/meminfo");
         long total = Long.parseLong(totalMemory) * 1024;
         String freeMemory = fileUtils.runRegexOnFile(FREE_SWAP_PATTERN, "/proc/meminfo");
         long free = Long.parseLong(freeMemory) * 1024;
-        return new MemoryStats(free, total);
+        return new MemoryStats(free, total, free);
     }
 
     public int numCpus() {
