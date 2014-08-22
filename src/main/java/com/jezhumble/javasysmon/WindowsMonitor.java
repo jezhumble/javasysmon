@@ -6,7 +6,17 @@ class WindowsMonitor implements Monitor {
     static {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
 		if (System.getProperty("os.arch").indexOf("64") > -1) {
-	            new NativeLibraryLoader().loadLibrary("javasysmon64.dll");
+			// Windows 7 - lower versions switch
+			float windowsVersion = Float.parseFloat(System.getProperty("os.version"));
+			float windows7Version = 6.1f;
+			if(Math.abs(windows7Version - windowsVersion) > 0.01)
+			{
+	            new NativeLibraryLoader().loadLibrary("javasysmon64xp.dll");
+			}
+			else
+			{
+	            new NativeLibraryLoader().loadLibrary("javasysmon64.dll");	
+			}
 		} else {
 	            new NativeLibraryLoader().loadLibrary("javasysmon.dll");
 		}
