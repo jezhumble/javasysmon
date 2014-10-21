@@ -97,11 +97,24 @@ class LinuxMonitor implements Monitor {
     }
 
     public long cpuFrequencyInHz() {
+    	try {
+    		final String rawHz = fileUtils.slurp("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq");
+    		if (rawHz != null) {
+    			final String[] rawParts = rawHz.split("\n");
+    			final long hz = Long.parseLong(rawParts[0]);
+    			return hz * 1000;
+    		}
+    	} catch (Exception ex) {
+    		System.out.println("Cannot read cpuinfo");
+    		System.out.println(ex.toString());
+    	}
+    	
         String cpuFrequencyAsString = fileUtils.runRegexOnFile(CPU_FREQ_PATTERN, "/proc/cpuinfo");
         int strLen = cpuFrequencyAsString.length();
         BigDecimal cpuFrequency = new BigDecimal(cpuFrequencyAsString.substring(0, strLen - 3));
         long multiplier = getMultiplier(cpuFrequencyAsString.charAt(strLen - 3));
         return cpuFrequency.multiply(new BigDecimal(Long.toString(multiplier))).longValue();
+
     }
 
     public long uptimeInSeconds() {
