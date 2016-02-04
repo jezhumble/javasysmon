@@ -1,10 +1,11 @@
 package com.jezhumble.javasysmon;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class ProcessTreeFunctionalTest extends TestCase {
-    public void testShouldKillChildProcesses() {
+public class ProcessTreeFunctionalTest {
+    @Test
+    public void shouldKillChildProcesses() {
         try {
             JavaSysMon monitor = new JavaSysMon();
             Assert.assertEquals(0, monitor.processTree().find(monitor.currentPid()).children().size());

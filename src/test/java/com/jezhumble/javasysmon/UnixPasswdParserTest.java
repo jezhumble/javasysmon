@@ -1,15 +1,16 @@
 package com.jezhumble.javasysmon;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.HashMap;
 
-public class UnixPasswdParserTest extends TestCase {
+public class UnixPasswdParserTest  {
 
-    public void testShouldHandleEmptyLineInPasswdFile() {
+    @Test
+    public void shouldHandleEmptyLineInPasswdFile() {
         String emptyLine = "+::::::\n";
         BufferedReader reader = new BufferedReader(new StringReader(emptyLine));
         UnixPasswdParser unixPasswdParser = new UnixPasswdParser();
