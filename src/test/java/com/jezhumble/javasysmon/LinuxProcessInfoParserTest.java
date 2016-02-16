@@ -1,11 +1,16 @@
 package com.jezhumble.javasysmon;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public class LinuxProcessInfoParserTest extends TestCase {
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class LinuxProcessInfoParserTest {
 
     private static final int USER_HZ = 100;
     private static final String COMMAND_LINE = "cl";
@@ -19,11 +24,13 @@ public class LinuxProcessInfoParserTest extends TestCase {
 
     private FileUtils fileUtils;
 
+    @Before
     public void setUp() throws Exception {
         fileUtils = new FileUtils();
     }
 
-    public void testExpectedCase() throws IOException {
+    @Test
+    public void shouldParseExpectedCase() throws IOException {
         LinuxProcessInfoParser parser = new LinuxProcessInfoParser(getTestFileContents("test_stat_expected"),
                                                                    getTestFileContents("test_status"),
                                                                    "cl", UIDS, USER_HZ);
@@ -39,7 +46,8 @@ public class LinuxProcessInfoParserTest extends TestCase {
         assertEquals(0L, processInfo.getUserMillis());
     }
 
-    public void testCommandWithSpaces() throws IOException {
+    @Test
+    public void shouldParseCommandWithSpaces() throws IOException {
         LinuxProcessInfoParser parser = new LinuxProcessInfoParser(getTestFileContents("test_stat_spaces"),
                                                                    getTestFileContents("test_status"),
                                                                    "cl", UIDS, USER_HZ);
@@ -48,7 +56,8 @@ public class LinuxProcessInfoParserTest extends TestCase {
         assertEquals(EXPECTED_PPID, processInfo.getParentPid());
     }
 
-    public void testCommandWithClosingParen() throws IOException {
+    @Test
+    public void shouldParseCommandWithClosingParen() throws IOException {
         LinuxProcessInfoParser parser = new LinuxProcessInfoParser(getTestFileContents("test_stat_paren"),
                                                                    getTestFileContents("test_status"),
                                                                    "cl", UIDS, USER_HZ);
@@ -57,7 +66,8 @@ public class LinuxProcessInfoParserTest extends TestCase {
         assertEquals(EXPECTED_PPID, processInfo.getParentPid());
     }
 
-    public void testCommandWithClosingParenThenNumbers() throws IOException {
+    @Test
+    public void shouldParseCommandWithClosingParenThenNumbers() throws IOException {
         LinuxProcessInfoParser parser = new LinuxProcessInfoParser(getTestFileContents("test_stat_numbers"),
                                                                    getTestFileContents("test_status"),
                                                                    "cl", UIDS, USER_HZ);
@@ -66,15 +76,18 @@ public class LinuxProcessInfoParserTest extends TestCase {
         assertEquals(EXPECTED_PPID, processInfo.getParentPid());
     }
 
-    public void testInvalidStatNumbers() throws IOException {
+    @Test
+    public void shouldParseInvalidStatNumbers() throws IOException {
         invalidStatTest("test_stat_invalid_numbers", "Unable to parse stat");
     }
 
-    public void testInvalidStatNoParens() throws IOException {
+    @Test
+    public void shouldParseInvalidStatNoParens() throws IOException {
         invalidStatTest("test_stat_no_parens", "does not include expected parens around process name");
     }
 
-    public void testInvalidStatTooFewFields() throws IOException {
+    @Test
+    public void shouldParseInvalidStatTooFewFields() throws IOException {
         invalidStatTest("test_stat_few_fields", "contains fewer elements than expected");
     }
 
@@ -95,8 +108,10 @@ public class LinuxProcessInfoParserTest extends TestCase {
         }
     }
 
+
+
     private String getTestFileContents(String filename) throws IOException
     {
-        return fileUtils.slurpFromInputStream(ClassLoader.getSystemClassLoader().getResourceAsStream(filename));
+        return fileUtils.slurpFromInputStream(this.getClass().getClassLoader().getResourceAsStream(filename));
     }
 }

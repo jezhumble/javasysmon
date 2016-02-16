@@ -1,9 +1,6 @@
 package com.jezhumble.javasysmon;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This object represents a node in the process tree. It knows

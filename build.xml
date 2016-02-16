@@ -3,7 +3,9 @@
   <path id="test.classpath">
     <pathelement path="target/classes"/>
     <pathelement path="target/test-classes"/>
-    <pathelement path="lib/java/junit-3.8.2.jar"/>
+    <pathelement path="lib/java/junit-4.12.jar"/>
+    <pathelement path="lib/java/hamcrest-core-1.3.jar"/>
+    <pathelement path="lib/native"/>
   </path>
  
   <target name="init">
@@ -17,13 +19,13 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac destdir="target/classes" target="1.4" source="1.4" debug="true">
+    <javac destdir="target/classes" debug="true" includeantruntime="false" source="1.7" target="1.7">
       <src path="src/main/java" />
     </javac>
   </target>
 
   <target name="compile-tests" depends="compile, init">
-    <javac destdir="target/test-classes" target="1.4" source="1.4">
+    <javac destdir="target/test-classes" debug="true" includeantruntime="false" source="1.7" target="1.7">
       <classpath refid="test.classpath"/>
       <src path="src/test/java" />
     </javac>
@@ -43,11 +45,11 @@
   </target>
 
   <target name="test" depends="compile, compile-tests">
-    <junit failureproperty="test.failure">
+    <junit failureproperty="test.failure" haltonfailure="true">
       <classpath refid="test.classpath"/>
       <batchtest todir="target/reports">
-        <fileset dir="target/test-classes" includes="**/*Test.class" />
-	<formatter type="plain"/>
+        <fileset dir="target/test-classes" includes="**/*Test.class"/>
+        <formatter type="plain"/>
       </batchtest>
     </junit>
   </target>
@@ -66,7 +68,7 @@
                version="true"
                windowtitle="Java System Monitor">
       <doctitle><![CDATA[<h1>Java System Monitor</h1>]]></doctitle>
-      <bottom><![CDATA[<i>Copyright &#169; 2009 ThoughtWorks. All Rights Reserved.</i>]]></bottom>
+      <bottom><![CDATA[<i>Copyright &#169; 2016 ThoughtWorks. All Rights Reserved.</i>]]></bottom>
       </javadoc>
   </target>
 

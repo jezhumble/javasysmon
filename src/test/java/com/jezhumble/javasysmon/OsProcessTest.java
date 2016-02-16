@@ -1,9 +1,9 @@
 package com.jezhumble.javasysmon;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class OsProcessTest extends TestCase {
+public class OsProcessTest {
     private static ProcessInfo[] info = {
             new ProcessInfo(0, 0, "", "init", "", 0, 0, 0, 0),
             new ProcessInfo(1, 0, "", "login", "", 0, 0, 0, 0),
@@ -12,12 +12,14 @@ public class OsProcessTest extends TestCase {
             new ProcessInfo(4, 5, "", "orphan", "", 0, 0, 0, 0)
     };
 
-    public void testShouldCreateProcessTree() {
+    @Test
+    public void shouldCreateProcessTree() {
         OsProcess virtualNode = OsProcess.createTree(info);
         Assert.assertEquals(virtualNode.children().size(), 2);
     }
 
-    public void testShouldFindDescendants() {
+    @Test
+    public void shouldFindDescendants() {
         OsProcess virtualNode = OsProcess.createTree(info);
         Assert.assertEquals("bash", virtualNode.find(3).processInfo().getName());
         Assert.assertEquals(virtualNode.find(50), null);       

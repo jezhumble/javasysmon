@@ -13,6 +13,7 @@ public class StubFileUtils extends FileUtils {
         }
         if (fileName.equals("/proc/self/stat")) {
             testFile = getTestFile("test_self_stat");
+            System.out.println("Test file" + testFile);
         }
         if (fileName.equals("/proc/meminfo")) {
             testFile = getTestFile("test_meminfo");
@@ -31,6 +32,6 @@ public class StubFileUtils extends FileUtils {
     }
 
     private InputStream getTestFile(String filename) {
-        return ClassLoader.getSystemClassLoader().getResourceAsStream(filename);        
+        return this.getClass().getClassLoader().getResourceAsStream(filename);
     }
 }

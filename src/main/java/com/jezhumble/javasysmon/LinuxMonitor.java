@@ -1,7 +1,7 @@
 package com.jezhumble.javasysmon;
 
-import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -151,7 +151,7 @@ class LinuxMonitor implements Monitor {
 
     public void killProcess(int pid) {
         try {
-            ProcessKiller.DESTROY_PROCESS.invoke(null, new Object[]{new Integer(pid)});
+            ProcessKiller.destroy(pid);
         } catch (Exception e) {
             throw new RuntimeException("Could not kill process id " + pid, e);
         }
@@ -178,17 +178,28 @@ class LinuxMonitor implements Monitor {
     // However I can't think of any better way to do this without writing native code for Linux which I want to avoid.
     // Wouldn't it be nice if deleting a directory in the proc filesystem killed the process?
     private static final class ProcessKiller {
+        private static double javaVersion = Double.parseDouble(System.getProperty("java.vm.specification.version"));
         private static Method DESTROY_PROCESS = null;
 
         static {
             try {
                 Class clazz = Class.forName("java.lang.UNIXProcess");
-                DESTROY_PROCESS = clazz.getDeclaredMethod("destroyProcess", new Class[]{int.class});
+                Class[] signature = javaVersion > 1.7 ? new Class[]{int.class, boolean.class} : new Class[]{int.class};
+
+                DESTROY_PROCESS = clazz.getDeclaredMethod("destroyProcess", signature);
                 DESTROY_PROCESS.setAccessible(true);
             } catch (Exception e) {
                 LinkageError x = new LinkageError("Couldn't get method java.lang.UNIXProcess.destroyProcess(int)");
                 x.initCause(e);
             }
+        }
+
+        public static void destroy(int pid) throws InvocationTargetException, IllegalAccessException {
+            Object[] parameters = javaVersion > 1.7 ? new Object[]{new Integer(pid), new Boolean(false)} : new Object[]{new Integer(pid)};
+            if (DESTROY_PROCESS == null) {
+                throw new RuntimeException("Cannot find a native method to kill processes.");
+            }
+            DESTROY_PROCESS.invoke(null, parameters);
         }
     }
 }
