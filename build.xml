@@ -19,13 +19,13 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac destdir="target/classes" debug="true" includeantruntime="false">
+    <javac destdir="target/classes" debug="true" includeantruntime="false" source="1.7" target="1.7">
       <src path="src/main/java" />
     </javac>
   </target>
 
   <target name="compile-tests" depends="compile, init">
-    <javac destdir="target/test-classes" debug="true" includeantruntime="false">
+    <javac destdir="target/test-classes" debug="true" includeantruntime="false" source="1.7" target="1.7">
       <classpath refid="test.classpath"/>
       <src path="src/test/java" />
     </javac>
