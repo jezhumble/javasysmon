@@ -281,4 +281,81 @@ public class JavaSysMon implements Monitor {
     public void infanticide() {
         killProcessTree(currentPid(), true);
     }
+    
+    
+    /**
+     * @param  The CPU usage of a process for a period of time
+     * @return  get the Process Usage in period time
+     */
+    private  float getProcessUsage(JavaSysMon monitor, String pid, String period) {
+
+		long cpuTotalTimeBegin = getCpuTotalTime(monitor);
+		long processTotalTimeBegin = getProcessTotalTimeByPid(monitor, Integer.parseInt(pid));
+
+		try {
+			Thread.sleep(Long.parseLong(period));
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		long cpuTotalTimeEnd = getCpuTotalTime(monitor);
+		long processTotalTimeEnd = getProcessTotalTimeByPid(monitor, Integer.parseInt(pid));
+
+		float processUsage = (float) (processTotalTimeEnd - processTotalTimeBegin)
+				/ (float) (cpuTotalTimeEnd - cpuTotalTimeBegin);
+
+		return processUsage;
+
+	}
+
+    /**
+    *
+    * @param the object of JavaSysMon
+    *  @return Get  time of the CPU has spent in user mode, kernel mode,
+    * and idle.
+    * 
+    */
+    public  long getCpuTotalTime(JavaSysMon monitor) {
+
+		return monitor.cpuTimes().getTotalMillis();
+	}
+
+    /**
+     * 
+     * @param  the object  of JavaSysMon and the process pid
+     * @return Get the pid of Process use the cpu  total time.
+     * 
+     */
+	public  long getProcessTotalTimeByPid(JavaSysMon monitor, int pid) {
+
+		ProcessInfo processInfo = findProcessByPid(monitor, pid);
+
+		if (processInfo == null) {
+			return 0;
+		}
+		return processInfo.getSystemMillis() + processInfo.getUserMillis();
+	}
+
+	/**
+	 * 
+	 * @param  the object of JavaSysMon and the Process pid
+	 * 
+	 * @return Get the ProcessInfo.
+	 * 
+	 */
+	public  ProcessInfo findProcessByPid(JavaSysMon monitor, int pid) {
+
+		ProcessInfo[] processInfos = monitor.processTable();
+
+		for (ProcessInfo processInfo : processInfos) {
+
+			if (pid == processInfo.getPid()) {
+				return processInfo;
+			}
+		}
+
+		return null;
+	}
+    
 }
